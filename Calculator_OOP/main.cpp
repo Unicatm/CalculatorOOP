@@ -125,11 +125,11 @@ public:
 		
 	}
 
-	double* getNumericValues() {
+	double* getNumericValues(char* input) {
 		return this->numericValues = parseNumericValues(input);
 	}
 
-	char* getOperators() {
+	char* getOperators(char* input) {
 		return this->operators = parseOperators(input);
 	}
 
@@ -229,18 +229,18 @@ public:
 
 
 
-	double performOperation(double operand1, double operand2, char op) {
+	double performOperation(double num1, double num2, char op) {
 
 		switch (op) {
 		case '+':
-			return operand1 + operand2;
+			return num1 + num2;
 		case '-':
-			return operand1 - operand2;
+			return num1 - num2;
 		case '*':
-			return operand1 * operand2;
+			return num1 * num2;
 		case '/':
-			if (operand2 != 0) {
-				return operand1 / operand2;
+			if (num2 != 0) {
+				return num1 / num2;
 			}
 			else {
 				throw invalid_argument("Nu se poate efectua impartirea la 0!");
@@ -252,7 +252,8 @@ public:
 
 	double findResult(double *numVal,const char* op) {  //momentan imi ia operatiile pe rand => 12+9/5 il va lua ca 12+9=21/5=4.2
 
-		//numVal = numVal.getNumericVal();
+		numVal = getNumericValues(input);
+		op = getOperators(input);
 
 		double result = numericValues[0];
 
@@ -266,6 +267,7 @@ public:
 		cout << endl<<result;
 		return result;
 	}
+
 
 	Expressions() {
 
@@ -291,9 +293,9 @@ class OperatoriMatematici : public Expressions, public Calculator {
 
 int main() {
 
-	const char* input = "12+9/5";
-	double* numVal = new double[3] {12, 9, 5};
-	char* op = new char[2] {'+', '/'};
+	const char* input = "12+3-5";
+	double* numVal = new double[3] {12, 3, 5};
+	char* op = new char[2] {'+', '-'};
 
 
 	/*Expressions exp1("12+9/5");
@@ -304,8 +306,8 @@ int main() {
 
 	Expressions exp2(input);
 	exp2.getInput();
-	exp2.getNumericValues();
-	exp2.getOperators();
+	//exp2.getNumericValues();
+	//exp2.getOperators();
 	exp2.findResult(numVal, op);
 
 	cout << endl <<endl;

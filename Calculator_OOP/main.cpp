@@ -15,6 +15,20 @@ public:
 		return copie;
 	}
 
+	static char* micsorareOperatorCuUnu(const char* operators, int contorOperators) {
+		char* newOperatorVect = new char[contorOperators - 1];
+
+		for (int j = 1; j < contorOperators; j++) {
+			newOperatorVect[j-1] = operators[j];
+		}
+
+		delete[] operators;
+		operators = newOperatorVect;
+
+		return newOperatorVect;
+
+	}
+
 	static bool isDigit(char c) {
 		return c >= '0' && c <= '9';
 	}
@@ -93,35 +107,36 @@ public:
 };
 
 
-class Expressions : public Calculator {
-	//char* input = nullptr;
+class Expressions {
+	char* input = nullptr;
 	double* numericValues = nullptr;
+	int contorNumValues = 0;
 	char* operators = nullptr;
+	int contorOperators = 0;
 
 public:
 
-	/*char* getInput() {
+	char* getInput() {
 		if (input == nullptr) {
 			return nullptr;
 		}
-		cout << this->input;
+		cout << this->input << endl;
 		return Util::copiereString(this->input);
 		
-	}*/
+	}
 
 	double* getNumericValues() {
-		return this->numericValues = parseNumericValues(getInput());
+		return this->numericValues = parseNumericValues(input);
 	}
 
 	char* getOperators() {
-		return this->operators = parseOperators(getInput());
+		return this->operators = parseOperators(input);
 	}
 
-	/*void setInput(const char* input) {
+	void setInput(const char* input) {
 		delete[] this->input;
 		this->input = Util::copiereString(input);
-	}*/
-
+	}
 
 	double* parseNumericValues(const char* input) {
 		double* extractedNum = nullptr;  //vectorul ce va retine toate numerele din input
@@ -131,6 +146,8 @@ public:
 
 		int extractedNumContor = 0;
 
+		int contor = 0;
+
  		for (int i = 0; i <= strlen(input); i++) {
 			if (Util::isDigit(input[i])) {  //daca e cifra, cifra se stocheaza in tempNum
 				tempNum[tempContor] = input[i];
@@ -139,6 +156,7 @@ public:
 			else if (tempContor > 0) {   // daca input[i] nu mai e cifra atunci ceea ce e in tempContor va fi transformat in int si va fi pus extractedNum
 				tempNum[tempContor] = '\0';
 				int num = atoi(tempNum);
+				contor++;
 
 				double* newExtractedNum = new double[extractedNumContor+1]; // newExtractedNum se mareste odata cu gasirea unui numar
 
@@ -156,8 +174,10 @@ public:
 			}
 		}
 
-		cout << endl;
 
+		contorNumValues = extractedNumContor;
+
+		cout << endl;
 		for (int i = 0; i < extractedNumContor; i++) {
 			cout << extractedNum[i] << " ";
 		}
@@ -185,8 +205,11 @@ public:
 				extractedOperators = newExtractedOperators;
 
 				extractedOperatorsContor++;
+				contorOperators++;
 			}
 		}
+
+		contorOperators = extractedOperatorsContor;
 
 		cout << endl;
 
@@ -196,7 +219,53 @@ public:
 
 		return extractedOperators;
 	}
-	
+
+
+
+	int test() {
+		cout << endl << (contorOperators);
+		return contorNumValues + 1 / sizeof(numericValues[0]);
+	}
+
+
+
+	double performOperation(double operand1, double operand2, char op) {
+
+		switch (op) {
+		case '+':
+			return operand1 + operand2;
+		case '-':
+			return operand1 - operand2;
+		case '*':
+			return operand1 * operand2;
+		case '/':
+			if (operand2 != 0) {
+				return operand1 / operand2;
+			}
+			else {
+				throw invalid_argument("Nu se poate efectua impartirea la 0!");
+			}
+		default:
+			throw invalid_argument("Operator invalid!");
+		}
+	}
+
+	double findResult(double *numVal,const char* op) {  //momentan imi ia operatiile pe rand => 12+9/5 il va lua ca 12+9=21/5=4.2
+
+		//numVal = numVal.getNumericVal();
+
+		double result = numericValues[0];
+
+		for (int i = 0; i < contorOperators; i++) {
+			double nextNumber = numericValues[i + 1];
+			char nextOperator = operators[i];
+
+			result = performOperation(result, nextNumber, nextOperator);
+		}
+
+		cout << endl<<result;
+		return result;
+	}
 
 	Expressions() {
 
@@ -207,36 +276,46 @@ public:
 	}
 
 	~Expressions(){
-		delete[] this->getInput();
+		delete[] this->input;
 		//cout<<endl << "deleted";
 	}
 
-	~Expressions() {
-
-	}
+	friend class OperatoriMatematici;
 
 };
 
-class OperatoriMatematici : public Expressions {
-
+class OperatoriMatematici : public Expressions, public Calculator {
 	
-
 };
 
 
 int main() {
 
-	Calculator c1;
-	c1.afisareInserare();
+	const char* input = "12+9/5";
+	double* numVal = new double[3] {12, 9, 5};
+	char* op = new char[2] {'+', '/'};
+
 
 	/*Expressions exp1("12+9/5");
 	exp1.getInput();
-
-	const char* input = "12+9/5";
-
 	exp1.getNumericValues();
-	exp1.getOperators();*/
+	exp1.getOperators();
+	exp1.test();*/
 
+	Expressions exp2(input);
+	exp2.getInput();
+	exp2.getNumericValues();
+	exp2.getOperators();
+	exp2.findResult(numVal, op);
+
+	cout << endl <<endl;
+
+	/*Expressions exp2("2+9+1");
+	exp2.getNumericValues();
+	exp2.getOperators();
+	exp2.afisare();*/
+
+	//exp2.afisare();
 
 	/*int* extractedNumbers = exp1.setNumericValues(input);
 	cout << endl;

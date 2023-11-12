@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include <iostream>
 #include <string>
 
@@ -33,6 +32,10 @@ public:
 		return c >= '0' && c <= '9';
 	}
 
+	static bool isSemicolumn(char c) {
+		return c == '.' || c == ',';
+	}
+
 	static bool isOperator(char c) {
 		return c == '+' || c == '-' || c == '/' || c == '*';
 	}
@@ -41,69 +44,13 @@ public:
 		return c == ' ';
 	}
 
-	static bool isRoundBrackets(char c) {
+	static bool isRoundedBrackets(char c) {
 		return c == '(' || c == ')';
 	}
 
 	static bool isSqareBrackets(char c) {
 		return c == '[' || c == ']';
 	}
-};
-
-
-class Calculator {
-
-	char* input = nullptr;
-
-public:
-
-	char* getInput() {
-
-		if (input == nullptr) {
-			return nullptr;
-		}
-		return Util::copiereString(this->input);
-
-	}
-
-	void setInput(const char* inputUser) {
-		if (input) {
-			delete[] input;
-		}
-		this->input = Util::copiereString(inputUser);
-	}
-
-
-	void afisareInserare() {
-
-		while (true) {
-			cout << "Introdu ecuatia: ";
-			char inputUser[100];
-			cin >> inputUser;
-			setInput(inputUser);
-		    
-
-			cout << getInput()<<endl;
-
-			if (strcmp(inputUser, "exit") == 0) {
-				break;
-			}
-		}
-
-	}
-
-	Calculator() {
-
-	}
-
-	Calculator(const char* userInput) {
-		this->setInput(userInput);
-	}
-
-	~Calculator() {
-		delete[] this->input;
-	}
-
 };
 
 
@@ -122,7 +69,7 @@ public:
 		}
 		cout << this->input << endl;
 		return Util::copiereString(this->input);
-		
+
 	}
 
 	double* getNumericValues(char* input) {
@@ -145,20 +92,25 @@ public:
 		char* tempNum = new char[20];  //un char care va tine minte fiecare numar si o va stoca in extractedNum 
 
 		int extractedNumContor = 0;
-
 		int contor = 0;
 
- 		for (int i = 0; i <= strlen(input); i++) {
+		for (int i = 0; i <= strlen(input); i++) {
 			if (Util::isDigit(input[i])) {  //daca e cifra, cifra se stocheaza in tempNum
 				tempNum[tempContor] = input[i];
 				tempContor++;
 			}
+			else if (Util::isSemicolumn(input[i])) {
+				tempNum[tempContor] = input[i];
+				tempContor++;
+				//cout << endl << "Hi " << tempNum;
+			}
 			else if (tempContor > 0) {   // daca input[i] nu mai e cifra atunci ceea ce e in tempContor va fi transformat in int si va fi pus extractedNum
 				tempNum[tempContor] = '\0';
-				int num = atoi(tempNum);
+				double num = stod(tempNum);
+				//cout << endl << "Hello " << num;
 				contor++;
 
-				double* newExtractedNum = new double[extractedNumContor+1]; // newExtractedNum se mareste odata cu gasirea unui numar
+				double* newExtractedNum = new double[extractedNumContor + 1]; // newExtractedNum se mareste odata cu gasirea unui numar
 
 				for (int j = 0; j < extractedNumContor; j++) {  //copiez ceea ce e in extractedNum in newExtractedNum
 					newExtractedNum[j] = extractedNum[j];
@@ -187,12 +139,12 @@ public:
 	}
 
 	char* parseOperators(const char* input) {
-	
-		char* extractedOperators = nullptr;  
+
+		char* extractedOperators = nullptr;
 		int extractedOperatorsContor = 0;
 
 		for (int i = 0; i <= strlen(input); i++) {
-			if (Util::isOperator(input[i])) {  
+			if (Util::isOperator(input[i])) {
 				char* newExtractedOperators = new char[extractedOperatorsContor + 1];
 
 				for (int j = 0; j < extractedOperatorsContor; j++) {
@@ -250,7 +202,25 @@ public:
 		}
 	}
 
-	double findResult(double *numVal,const char* op) {  //momentan imi ia operatiile pe rand => 12+9/5 il va lua ca 12+9=21/5=4.2
+	double findResult(char* userInput) {  //PT CLASA CALCULATOR   //momentan imi ia operatiile pe rand => 12+9/5 il va lua ca 12+9=21/5=4.2
+		
+		numericValues = getNumericValues(userInput);
+		operators = getOperators(userInput);
+
+		double result = numericValues[0];
+
+		for (int i = 0; i < contorOperators; i++) {
+			double nextNumber = numericValues[i + 1];
+			char nextOperator = operators[i];
+
+			result = performOperation(result, nextNumber, nextOperator);
+		}
+
+		cout << endl << result;
+		return result;
+	}
+
+	double findResult(double* numVal, const char* op) { //PT TESTE //momentan imi ia operatiile pe rand => 12+9/5 il va lua ca 12+9=21/5=4.2
 
 		numVal = getNumericValues(input);
 		op = getOperators(input);
@@ -264,7 +234,7 @@ public:
 			result = performOperation(result, nextNumber, nextOperator);
 		}
 
-		cout << endl<<result;
+		cout << endl << result;
 		return result;
 	}
 
@@ -277,7 +247,7 @@ public:
 		this->setInput(userInput);
 	}
 
-	~Expressions(){
+	~Expressions() {
 		delete[] this->input;
 		//cout<<endl << "deleted";
 	}
@@ -286,6 +256,65 @@ public:
 
 };
 
+class Calculator: public Expressions {
+
+	char* input = nullptr;
+
+public:
+
+	char* getInput() {
+
+		if (input == nullptr) {
+			return nullptr;
+		}
+		return Util::copiereString(this->input);
+
+	}
+
+	void setInput(const char* inputUser) {
+		if (input) {
+			delete[] input;
+		}
+		this->input = Util::copiereString(inputUser);
+	}
+
+
+	void afisareInserare() {
+
+		while (true) {
+			cout<<endl <<"Introdu ecuatia: "<<endl;
+			char inputUser[100];
+			cin >> inputUser;
+			setInput(inputUser);
+			Expressions::findResult(input);
+			cout<<endl <<"___________"<< endl;
+
+			//cout << getInput()<<endl;
+
+			if (strcmp(inputUser, "exit") == 0) {
+				break;
+			}
+		}
+
+	}
+
+	Calculator() {
+
+	}
+
+	Calculator(const char* userInput) {
+		this->setInput(userInput);
+	}
+
+	~Calculator() {
+		delete[] this->input;
+	}
+
+};
+
+
+
+
 class OperatoriMatematici : public Expressions, public Calculator {
 	
 };
@@ -293,9 +322,15 @@ class OperatoriMatematici : public Expressions, public Calculator {
 
 int main() {
 
-	const char* input = "12+3-5";
+	//Calculator c1;
+	//c1.afisareInserare();
+
+	const char* input = "12.5+3-5";
 	double* numVal = new double[3] {12, 3, 5};
 	char* op = new char[2] {'+', '-'};
+
+	/*Expressions exp3(input);
+	exp3.parseNumericValues("12.1+3-5");*/
 
 
 	/*Expressions exp1("12+9/5");
@@ -305,7 +340,7 @@ int main() {
 	exp1.test();*/
 
 	Expressions exp2(input);
-	exp2.getInput();
+	//exp2.getInput();
 	//exp2.getNumericValues();
 	//exp2.getOperators();
 	exp2.findResult(numVal, op);

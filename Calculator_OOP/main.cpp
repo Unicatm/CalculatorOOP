@@ -51,6 +51,10 @@ public:
 	static bool isSqareBrackets(char c) {
 		return c == '[' || c == ']';
 	}
+
+	static double* micsorareVector() {
+
+	}
 };
 
 
@@ -257,11 +261,12 @@ public:
 			double nextNumber = numericValues[i + 1];
 			char nextOperator = operators[i];
 
+			char oldNextOperator = nextOperator;
 			/*cout << endl << nextNumber;
 			cout << endl << endl;*/
 
 			if (priority[i] == '1') {
-				for(int j = 0; j< contorNumValues; j++){ //AM MICSORAT VECTORUL numVal SI ADAUGAT VALORILE NOI
+				for(int j = 0; j< contorNumValues; j++){ 
 					double result = numVal[j];
 					double oldResult = result; 
 					double oldNextNum = nextNumber;
@@ -275,9 +280,9 @@ public:
 					//cout << endl << "contorNumValues " << contorNumValues;
 
 
+					//AM MICSORAT VECTORUL numVal SI ADAUGAT VALORILE NOI
 					int oldContorNumValues = contorNumValues;
 					contorNumValues -= 1;
-					//cout <<endl << "ContorNum " << contorNumValues;
 
 
 					double* newNumVal = nullptr;
@@ -304,7 +309,6 @@ public:
 						}
 
 					delete[] numVal;
-					//cout << endl<< "Aici" << oldContorNumValues;
 					numVal = new double[oldContorNumValues];
 					numVal = newNumVal;
 					
@@ -314,10 +318,42 @@ public:
 						cout << numVal[i] << " ";
 					}
 				}
+
+				// AICI VREAU SA MICSOREZ VECTORUL CU OPERATORI momentan nu merge bine
+				// DUPA ASTA TREBUIE SA VAD PRIORITATEA DIN NOII VECTORI IAR DACA NU MAI EXISTA VREO PRIORITATE = 1 SE VA FACE CALCULUL NORMAL
+				int oldContorOperators = contorOperators;
+				contorOperators -= 1;
+
+				char* newOp = nullptr;
+				delete[] newOp;
+				newOp = new char[contorOperators];
+
+				int contorNewOp = 0;
+
+				for (int k = 0; k < contorOperators + 1; ++k) {
+
+					if (op[k] != oldNextOperator) {
+						newOp[contorNewOp] = op[k];
+						++contorNewOp;
+
+					}
+
+
+					if (contorNewOp > contorOperators) {
+						contorNewOp--;
+					}
+				}
+
+				delete[] op;
+				numVal = new double[oldContorOperators];
+				op = newOp;
 			
+				cout << endl << "op vechi ";
+				for (int i = 0; i < contorOperators; i++) {
+					cout << op[i] << " ";
+				}
 				
 			}
-			
 			
 		}
 

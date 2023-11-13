@@ -61,6 +61,8 @@ class Expressions {
 	char* operators = nullptr;
 	int contorOperators = 0;
 
+	char* priority = nullptr;
+
 public:
 
 	char* getInput() {
@@ -172,6 +174,29 @@ public:
 		return extractedOperators;
 	}
 
+	char* findPriority(const char* op) {
+
+		op = getOperators(input);
+		priority = new char[contorOperators];
+
+
+		for (int i = 0; i < contorOperators; i++) {
+
+			if (op[i] == '*' || op[i] == '/') {
+				priority[i] = '1';
+			}
+			else {
+				priority[i] = '0';
+			}
+
+		}
+		
+		/*cout << endl<<"Priority ";
+		for (int i = 0; i < contorOperators; i++) {
+			cout << priority[i] << " ";
+		}*/
+		return priority;
+	}
 
 
 	int test() {
@@ -220,18 +245,71 @@ public:
 		return result;
 	}
 
-	double findResult(double* numVal, const char* op) { //PT TESTE //momentan imi ia operatiile pe rand => 12+9/5 il va lua ca 12+9=21/5=4.2
+	double findResult(double* numVal, const char* op, const char* priority) { //PT TESTE //momentan imi ia operatiile pe rand => 12+9/5 il va lua ca 12+9=21/5=4.2
 
 		numVal = getNumericValues(input);
 		op = getOperators(input);
+		priority = findPriority(op);
 
-		double result = numericValues[0];
+		double result = 0;
 
 		for (int i = 0; i < contorOperators; i++) {
 			double nextNumber = numericValues[i + 1];
 			char nextOperator = operators[i];
 
-			result = performOperation(result, nextNumber, nextOperator);
+			/*cout << endl << nextNumber;
+			cout << endl << endl;*/
+
+			if (priority[i] == '1') {
+				for(int j = 0; j< contorNumValues; j++){
+					double result = numVal[j];
+					double oldResult = result; 
+					double oldNextNum = nextNumber;
+
+					result = performOperation(result, nextNumber, nextOperator);
+
+					cout <<endl <<"Rezultat " << result;
+					cout << endl << "contorNumValues " << contorNumValues;
+
+
+					int oldContorNumValues = contorNumValues;
+					contorNumValues -= 2;
+					cout <<endl << "ContorNum " << contorNumValues;
+
+
+					double* newNumVal = nullptr;
+					delete[] newNumVal;
+					newNumVal = new double[contorNumValues];
+
+					int contorNewVal = 0;
+
+						for (int i = 0; i < contorNumValues+2; ++i) {
+							cout << endl<<"NumVAL I" << numVal[i]<<endl;
+
+							if (numVal[i] != oldResult && numVal[i] != oldNextNum) {
+								newNumVal[contorNewVal] = numVal[i];
+								++contorNewVal;
+							}
+
+
+							if (contorNewVal > contorNumValues) {
+								contorNewVal--;
+							}
+				}
+
+					delete[] numVal;
+					cout << endl<< "Aici" << oldContorNumValues;
+					numVal = new double[oldContorNumValues];
+					numVal = newNumVal;
+
+					cout << endl << "vector vechi ";
+					for (int i = 0; i < contorNumValues; i++) {
+						cout << numVal[i] << " ";
+					}
+				}
+			}
+			
+			
 		}
 
 		cout << endl << result;
@@ -329,6 +407,11 @@ int main() {
 	double* numVal = new double[3] {12, 3, 5};
 	char* op = new char[2] {'+', '-'};
 
+	const char* input2 = "12*9+10/2";
+	double* numVal2 = new double[4] {12, 9, 10, 2};
+	char* op2 = new char[3] {'*', '+', '/'};
+	char* priority = new char[3] {'1', '0', '1'};
+
 	/*Expressions exp3(input);
 	exp3.parseNumericValues("12.1+3-5");*/
 
@@ -339,11 +422,12 @@ int main() {
 	exp1.getOperators();
 	exp1.test();*/
 
-	Expressions exp2(input);
+	Expressions exp2(input2);
 	//exp2.getInput();
 	//exp2.getNumericValues();
 	//exp2.getOperators();
-	exp2.findResult(numVal, op);
+	exp2.findResult(numVal2, op2, priority);
+	//exp2.findPriority(op2);
 
 	cout << endl <<endl;
 

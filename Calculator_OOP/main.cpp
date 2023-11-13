@@ -261,20 +261,23 @@ public:
 			cout << endl << endl;*/
 
 			if (priority[i] == '1') {
-				for(int j = 0; j< contorNumValues; j++){
+				for(int j = 0; j< contorNumValues; j++){ //AM MICSORAT VECTORUL numVal SI ADAUGAT VALORILE NOI
 					double result = numVal[j];
 					double oldResult = result; 
 					double oldNextNum = nextNumber;
 
+
 					result = performOperation(result, nextNumber, nextOperator);
+					cout << endl << "Next Op" << nextOperator;
+
 
 					cout <<endl <<"Rezultat " << result;
-					cout << endl << "contorNumValues " << contorNumValues;
+					//cout << endl << "contorNumValues " << contorNumValues;
 
 
 					int oldContorNumValues = contorNumValues;
-					contorNumValues -= 2;
-					cout <<endl << "ContorNum " << contorNumValues;
+					contorNumValues -= 1;
+					//cout <<endl << "ContorNum " << contorNumValues;
 
 
 					double* newNumVal = nullptr;
@@ -283,10 +286,13 @@ public:
 
 					int contorNewVal = 0;
 
-						for (int i = 0; i < contorNumValues+2; ++i) {
-							cout << endl<<"NumVAL I" << numVal[i]<<endl;
+						for (int i = 0; i < contorNumValues+1; ++i) {
+							//cout << endl<<"NumVAL I" << numVal[i]<<endl;
 
-							if (numVal[i] != oldResult && numVal[i] != oldNextNum) {
+							if (numVal[i] != oldResult) {
+								if (numVal[i] == oldNextNum) {
+									numVal[i] = result;
+								}
 								newNumVal[contorNewVal] = numVal[i];
 								++contorNewVal;
 							}
@@ -295,18 +301,21 @@ public:
 							if (contorNewVal > contorNumValues) {
 								contorNewVal--;
 							}
-				}
+						}
 
 					delete[] numVal;
-					cout << endl<< "Aici" << oldContorNumValues;
+					//cout << endl<< "Aici" << oldContorNumValues;
 					numVal = new double[oldContorNumValues];
 					numVal = newNumVal;
+					
 
 					cout << endl << "vector vechi ";
 					for (int i = 0; i < contorNumValues; i++) {
 						cout << numVal[i] << " ";
 					}
 				}
+			
+				
 			}
 			
 			

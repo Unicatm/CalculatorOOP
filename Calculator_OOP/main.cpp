@@ -52,18 +52,41 @@ public:
 		return c == '[' || c == ']';
 	}
 
-	static double* micsorareVector() {
+	static void updateArrays(double*& array, int& size, double value, double result) {
+		int oldSize = size;
+		size -= 1;
 
+		double* newArray = new double[size];
+
+		int newIndex = 0;
+		for (int i = 0; i < oldSize + 1; ++i) {
+			if (array[i] != result) {
+				if (array[i] == value) {
+					array[i] = result;
+				}
+				newArray[newIndex] = array[i];
+				++newIndex;
+			}
+		}
+
+		delete[] array;
+		array = new double[oldSize];
+		for (int i = 0; i < oldSize; ++i) {
+			array[i] = newArray[i];
+		}
+		delete[] newArray;
 	}
+
 };
 
 
 class Expressions {
 	char* input = nullptr;
 	double* numericValues = nullptr;
-	int contorNumValues = 0;
 	char* operators = nullptr;
+
 	int contorOperators = 0;
+	int contorNumValues = 0;
 
 	char* priority = nullptr;
 
@@ -90,6 +113,9 @@ public:
 		delete[] this->input;
 		this->input = Util::copiereString(input);
 	}
+
+
+
 
 	double* parseNumericValues(const char* input) {
 		double* extractedNum = nullptr;  //vectorul ce va retine toate numerele din input
@@ -255,107 +281,162 @@ public:
 		op = getOperators(input);
 		priority = findPriority(op);
 
-		double result = 0;
+		double result = 0.0;
 
 		for (int i = 0; i < contorOperators; i++) {
-			double nextNumber = numericValues[i + 1];
-			char nextOperator = operators[i];
-
-			char oldNextOperator = nextOperator;
-			/*cout << endl << nextNumber;
-			cout << endl << endl;*/
+			//double nextNumber = numericValues[i + 1];
+			//char nextOperator = operators[i];
 
 			if (priority[i] == '1') {
-				for(int j = 0; j< contorNumValues; j++){ 
-					double result = numVal[j];
-					double oldResult = result; 
-					double oldNextNum = nextNumber;
+				double result2 = numVal[i];
+				double oldResult = numVal[i];
+
+				cout << "Old Res " << oldResult << endl;
+
+					result2 = performOperation(result2, numVal[i + 1], op[i]);
+					cout << endl << "Result -> " << result2;
+					cout << endl << "Num Val " <<i<< " -> " << numVal[i];
+
+					int oldNumValSize = contorNumValues;
+					contorNumValues--;
 
 
-					result = performOperation(result, nextNumber, nextOperator);
-					cout << endl << "Next Op" << nextOperator;
+					double* newNumVal = new double[contorNumValues]; //cu newNumVal vreau sa copiez valorile care au ramas(inclusiv rezultatul nou) din numVal 
+
+					numVal[i+1] = result2;
+					numVal[i] = NULL;
 
 
-					cout <<endl <<"Rezultat " << result;
-					//cout << endl << "contorNumValues " << contorNumValues;
 
-
-					//AM MICSORAT VECTORUL numVal SI ADAUGAT VALORILE NOI
-					int oldContorNumValues = contorNumValues;
-					contorNumValues -= 1;
-
-
-					double* newNumVal = nullptr;
-					delete[] newNumVal;
-					newNumVal = new double[contorNumValues];
+					cout << endl << "Num val i+1" << i+1 << " ->" << numVal[i+1] << endl;
 
 					int contorNewVal = 0;
 
-						for (int i = 0; i < contorNumValues+1; ++i) {
-							//cout << endl<<"NumVAL I" << numVal[i]<<endl;
-
-							if (numVal[i] != oldResult) {
-								if (numVal[i] == oldNextNum) {
-									numVal[i] = result;
-								}
-								newNumVal[contorNewVal] = numVal[i];
-								++contorNewVal;
-							}
-
-
-							if (contorNewVal > contorNumValues) {
-								contorNewVal--;
-							}
+					for (int j = 0; j < oldNumValSize+1; j++) {
+						if (numVal[j] != NULL) {
+							newNumVal[contorNewVal] = numVal[j];
+							contorNewVal++;
 						}
-
-					delete[] numVal;
-					numVal = new double[oldContorNumValues];
-					numVal = newNumVal;
-					
-
-					cout << endl << "vector vechi ";
-					for (int i = 0; i < contorNumValues; i++) {
-						cout << numVal[i] << " ";
-					}
-				}
-
-				// AICI VREAU SA MICSOREZ VECTORUL CU OPERATORI momentan nu merge bine
-				// DUPA ASTA TREBUIE SA VAD PRIORITATEA DIN NOII VECTORI IAR DACA NU MAI EXISTA VREO PRIORITATE = 1 SE VA FACE CALCULUL NORMAL
-				int oldContorOperators = contorOperators;
-				contorOperators -= 1;
-
-				char* newOp = nullptr;
-				delete[] newOp;
-				newOp = new char[contorOperators];
-
-				int contorNewOp = 0;
-
-				for (int k = 0; k < contorOperators + 1; ++k) {
-
-					if (op[k] != oldNextOperator) {
-						newOp[contorNewOp] = op[k];
-						++contorNewOp;
-
 					}
 
+					//delete[] numVal;
+					//numVal = new double[contorNumValues];
+					//numVal = newNumVal;
 
-					if (contorNewOp > contorOperators) {
-						contorNewOp--;
+
+					cout <<endl <<"Updated NewNumVal: ";
+					for (int l = 0; l < contorNumValues; l++) {
+						cout << newNumVal[l] << " ";
 					}
-				}
+					cout <<endl <<"Fin" << endl;
 
-				delete[] op;
-				numVal = new double[oldContorOperators];
-				op = newOp;
-			
-				cout << endl << "op vechi ";
-				for (int i = 0; i < contorOperators; i++) {
-					cout << op[i] << " ";
-				}
-				
+					cout <<endl <<"ContorNUm " << contorNumValues << endl;
+
 			}
-			
+			cout << endl;
 		}
+
+		//for (int i = 0; i < contorOperators; i++) {
+		//	double nextNumber = numericValues[i + 1];
+		//	char nextOperator = operators[i];
+
+		//	char oldNextOperator = nextOperator;
+		//	/*cout << endl << nextNumber;
+		//	cout << endl << endl;*/
+
+		//	if (priority[i] == '1') {
+		//		for(int j = 0; j< contorNumValues; j++){ 
+		//			double result = numVal[j];
+		//			double oldResult = result; 
+		//			double oldNextNum = nextNumber;
+
+
+		//			result = performOperation(result, nextNumber, nextOperator);
+		//			cout << endl << "Next Op" << nextOperator;
+
+
+		//			cout <<endl <<"Rezultat " << result;
+		//			//cout << endl << "contorNumValues " << contorNumValues;
+
+
+		//			//AM MICSORAT VECTORUL numVal SI ADAUGAT VALORILE NOI
+		//			int oldContorNumValues = contorNumValues;
+		//			contorNumValues -= 1;
+
+
+		//			double* newNumVal = nullptr;
+		//			delete[] newNumVal;
+		//			newNumVal = new double[contorNumValues];
+
+		//			int contorNewVal = 0;
+
+		//				for (int i = 0; i < contorNumValues+1; ++i) {
+		//					//cout << endl<<"NumVAL I" << numVal[i]<<endl;
+
+		//					if (numVal[i] != oldResult) {
+		//						if (numVal[i] == oldNextNum) {
+		//							numVal[i] = result;
+		//						}
+		//						newNumVal[contorNewVal] = numVal[i];
+		//						++contorNewVal;
+		//					}
+
+
+		//					if (contorNewVal > contorNumValues) {
+		//						contorNewVal--;
+		//					}
+		//				}
+
+		//			delete[] numVal;
+		//			numVal = new double[oldContorNumValues];
+		//			numVal = newNumVal;
+		//			
+
+		//			cout << endl << "vector vechi ";
+		//			for (int i = 0; i < contorNumValues; i++) {
+		//				cout << numVal[i] << " ";
+		//			}
+
+		//			int oldContorOperators = contorOperators;
+		//			contorOperators -= 1;
+
+		//			char* newOp = nullptr;
+		//			delete[] newOp;
+		//			newOp = new char[contorOperators];
+
+		//			int contorNewOp = 0;
+
+		//			for (int k = 0; k < contorOperators + 1; k++) {
+
+		//				if (op[k] != oldNextOperator) {
+		//					newOp[contorNewOp] = op[k];
+		//					++contorNewOp;
+
+		//				}
+
+
+		//				if (contorNewOp > contorOperators) {
+		//					contorNewOp--;
+		//				}
+		//			}
+
+		//			delete[] op;
+		//			numVal = new double[oldContorOperators];
+		//			op = newOp;
+		//			priority = findPriority(newOp);
+
+		//			cout << endl << "op vechi ";
+		//		}
+
+		//		// AICI VREAU SA MICSOREZ VECTORUL CU OPERATORI momentan nu merge bine
+		//		// DUPA ASTA TREBUIE SA VAD PRIORITATEA DIN NOII VECTORI IAR DACA NU MAI EXISTA VREO PRIORITATE = 1 SE VA FACE CALCULUL NORMAL
+		//		
+		//		
+		//	}
+		//	
+		//}
+
+
 
 		cout << endl << result;
 		return result;

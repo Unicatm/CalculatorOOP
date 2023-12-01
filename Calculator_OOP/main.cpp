@@ -41,6 +41,9 @@ public:
 		if (op == '^') {
 			return 3;
 		}
+		if (op == '#') {
+			return 4;
+		}
 		return 0; 
 	}
 
@@ -728,21 +731,130 @@ public:
 	}
 
 
+
+	char* infixToPostfixTEST(const char* infix) //TEST TO CHAR*
+	{
+		string result;
+
+		for (int i = 0; i < strlen(infix) + 1; i++) {
+			char c = infix[i];
+
+			//e nou de la || in colo
+			if (Util::isDigit(c) || (Util::isSemicolumn(c) && Util::isDigit(infix[i + 1]))) {
+				//e nou de la while la i--;
+				while (Util::isDigit(c) || Util::isSemicolumn(c)) {
+					if (c == ',') {
+						c = '.';
+					}
+					result += c;
+					c = infix[++i];
+				}
+				i--;
+
+				if (Util::isOperator(infix[i + 1]) || Util::isExpresion(infix[i + 1])) {
+					result += ' ';
+				}
+			}
+			else if (c == '(') {
+				stack.push('(');
+			}
+			else if (c == ')') {
+				while (stack.top() != '(') {
+					result += stack.pop();
+				}
+				stack.pop();
+			}
+			else {
+				while (!stack.empty()
+					&& Util::precedence(c) <= Util::precedence(stack.top())) {
+					result += stack.pop();
+				}
+				stack.push(c);
+			}
+		}
+
+		while (!stack.empty()) {
+			result += stack.pop();
+		}
+
+		
+		char* charResult = new char(result.length() + 1);
+
+		for (int i = 0; i < result.length(); i++) {
+			charResult[i] = result[i];
+		}
+
+
+		/*for (int i = 0; i < result.length(); i++) {
+			cout << charResult[i];
+		}*/
+		return charResult;
+
+	}
+
+	float evaluatePostfixTEST(const char* infix) { //TEST
+
+		char* postfix = infixToPostfixTEST(infix);
+
+		Stack s(strlen(infix));
+
+		//cout << endl << "OK";
+
+
+		for (int i = 0; i < strlen(postfix); i++) {
+			char c = postfix[i];
+
+			if (c == ' ') continue;
+			else if (Util::isDigit(c)) {
+				float num = 0;
+
+				while (Util::isDigit(c)) {
+					num = num * 10 + (c - '0');
+					i++;
+					c = postfix[i];
+				}
+				i--;
+
+				s.push(num);
+			}
+			else {
+				float val1 = s.top();
+				s.pop();
+				float val2 = s.top();
+				s.pop();
+
+				s.push(performOp(val1, val2, c));
+
+			}
+		}
+
+		float result = s.pop();
+		//cout << "AICI " << result << endl;
+		return result;
+
+	}
+
+
+
 	string infixToPostfix() //GOOD
 	{
 		string result;
 
-		for (int i = 0; i < strlen(input); i++) {
+		for (int i = 0; i < strlen(input)+1; i++) {
 			char c = input[i];
 
-
-			if (Util::isDigit(c)){
-				result += c;
-				//aici semicol
-				/*if (Util::isSemicolumn(c)) {
+			//e nou de la || in colo
+			if (Util::isDigit(c) || (Util::isSemicolumn(c) && Util::isDigit(input[i+1]))) {
+				//e nou de la while la i--;
+				while (Util::isDigit(c) || Util::isSemicolumn(c)) {
+					if (c == ',') {
+						c = '.';
+					}
 					result += c;
-					continue;
-				}*/
+					c = input[++i];
+				}
+				i--;
+				
 				if (Util::isOperator(input[i + 1]) || Util::isExpresion(input[i+1])) {
 					result += ' ';
 				}
@@ -753,7 +865,6 @@ public:
 			else if (c == ')') {
 				while (stack.top() != '(') {
 					result += stack.pop();
-					//stack.pop();
 				}
 				stack.pop();
 			}
@@ -761,7 +872,6 @@ public:
 				while (!stack.empty()
 					&& Util::precedence(c) <= Util::precedence(stack.top())) {
 					result += stack.pop();
-					//stack.pop();
 				}
 				stack.push(c);
 			}
@@ -783,10 +893,11 @@ public:
 
 		cout << endl<<"OK";
 
+
 		for (int i = 0; i < postfix.length(); i++) {
 			char c = postfix[i];
 
-			if (c == ' ' || Util::isSemicolumn(c)) continue;
+			if (c == ' ') continue;
 			else if (Util::isDigit(c)) {
 				float num = 0;
 
@@ -821,9 +932,10 @@ public:
 
 
 
-class Calculator: public Expressions {
+class Calculator: public Expr4 {
 
 	char* input = nullptr;
+	//string input;
 
 public:
 
@@ -844,21 +956,23 @@ public:
 	}
 
 
+
 	void afisareInserare() {
 
 		while (true) {
-			cout<<endl <<"Introdu ecuatia: "<<endl;
+
+			cout<<endl <<"Introdu ecuatia: ";
 			char inputUser[100];
 			cin >> inputUser;
-			setInput(inputUser);
-			Expressions::findResult(input);
-			cout<<endl <<"___________"<< endl;
-
-			//cout << getInput()<<endl;
 
 			if (strcmp(inputUser, "exit") == 0) {
 				break;
 			}
+
+			Expr4::setInput(inputUser);
+			//Expr4::getInput();
+			cout << "Result: " << Expr4::evaluatePostfixTEST(inputUser) << endl;
+			cout<<endl <<"___________"<< endl;
 		}
 
 	}
@@ -881,29 +995,16 @@ public:
 
 int main() {
 
-	//Calculator c1;
-	//c1.afisareInserare();
-
-	const char* input = "12.5+3-5";
-	double* numVal = new double[3] {12, 3, 5};
-	char* op = new char[2] {'+', '-'};
-
-	const char* input2 = "12*9+10/2";
-	double* numVal2 = new double[4] {12, 9, 10, 2};
-	char* op2 = new char[3] {'*', '+', '/'};
-	int* priority = new int[3] {1, 0, 1};
-
-
-	cout << endl << endl;
-
+	Calculator c1;
+	c1.afisareInserare();
 
 	//"40+(5-1)*2"
 
-	Expr4 exp1;
-	exp1.setInput("(2+1)^3"); //40+4*2 = 48   9.4
-	exp1.getInput();
-	exp1.evaluatePostfix("(2+1)^3");
-	exp1.infixToPostfix();
+	//Expr4 exp1;
+	//exp1.setInput("(3*2)^2"); //40+4*2 = 48   9.4 10.0
+	//exp1.getInput();
+	//exp1.evaluatePostfix("(3*2)^2");
+	//exp1.infixToPostfixTEST();
 
 /*	Expr4 exp2;
 	exp2.setInput("40.5+(5-1.1)*2");*/ //40+4*2 = 48
@@ -911,15 +1012,15 @@ int main() {
 	//exp1.evaluatePostfix("40.5+(5-1.1)*2");
 
 
-	/*while (true) {
-		cout << "Introdu ecuatia: ";
-		string input;
-		cin >> input;
+	//while (true) {
+	//	cout << "Introdu ecuatia: ";
+	//	string input;
+	//	cin >> input;
 
-		if (input == "exit") {
-			break;
-		}
-	}*/
+	//	if (input == "exit") {
+	//		break;
+	//	}
+	//}
 
 	return 0;
 }

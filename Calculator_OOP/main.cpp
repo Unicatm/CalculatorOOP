@@ -3,6 +3,8 @@
 
 using namespace std;
 
+
+
 class Util {
 public:
 	static char* copiereString(const char* sursa) {
@@ -28,6 +30,20 @@ public:
 
 	}
 
+
+	static int precedence(char op) {
+		if (op == '+' || op == '-') {
+			return 1;
+		}
+		if (op == '*' || op == '/') {
+			return 2;
+		}
+		if (op == '^') {
+			return 3;
+		}
+		return 0; 
+	}
+
 	static bool isDigit(char c) {
 		return c >= '0' && c <= '9';
 	}
@@ -38,6 +54,10 @@ public:
 
 	static bool isOperator(char c) {
 		return c == '+' || c == '-' || c == '/' || c == '*';
+	}
+
+	static bool isExpresion(char c) {
+		return  c == '^' || c == '#';
 	}
 
 	static bool isSpace(char c) {
@@ -52,30 +72,79 @@ public:
 		return c == '[' || c == ']';
 	}
 
-	static void updateArrays(double*& array, int& size, double value, double result) {
-		int oldSize = size;
-		size -= 1;
-
-		double* newArray = new double[size];
-
-		int newIndex = 0;
-		for (int i = 0; i < oldSize + 1; ++i) {
-			if (array[i] != result) {
-				if (array[i] == value) {
-					array[i] = result;
-				}
-				newArray[newIndex] = array[i];
-				++newIndex;
-			}
-		}
-
-		delete[] array;
-		array = new double[oldSize];
-		for (int i = 0; i < oldSize; ++i) {
-			array[i] = newArray[i];
-		}
-		delete[] newArray;
+	static float scanNum(char ch) {
+		int value;
+		value = ch;
+		return float(value - '0');
 	}
+
+};
+
+
+class Stack {
+
+private:
+	float* stack = nullptr;
+	int topStack = -1;
+	int counterStack = 0;
+
+public:
+
+
+	Stack(int size = 100) {
+		counterStack = size;
+		stack = new float[counterStack];
+		topStack = -1;
+	}
+
+	~Stack() {
+		if (this->stack != nullptr) {
+			delete[] stack;
+			stack = nullptr;
+		}
+	}
+
+	bool full() {
+		return topStack >= counterStack - 1;
+	}
+
+	bool empty() {
+		return topStack < 0;
+	}
+
+	bool push(float value) {
+		if (full()) {
+			return false;
+		}
+		
+		stack[++topStack] = value;
+		return true;
+	}
+
+	 float pop() {
+		 if (empty()) {
+			 cout << "Stack underflow" << endl;
+			 return 0;
+		 }
+
+		return stack[topStack--];
+	}
+
+	 float peek() {
+		 if (empty()) {
+			 cout << "Stack is empty" << endl;
+			 return 0;
+		 }
+		 return stack[topStack];
+	 }
+
+	 float top(){
+		 return peek();
+	 }
+
+	 bool isEmpty() {
+		 return topStack == -1;
+	 }
 
 };
 
@@ -88,9 +157,12 @@ class Expressions {
 	int contorOperators = 0;
 	int contorNumValues = 0;
 
-	char* priority = nullptr;
+	int* priority = nullptr;
+
+	Stack stack;
 
 public:
+
 
 	char* getInput() {
 		if (input == nullptr) {
@@ -204,19 +276,19 @@ public:
 		return extractedOperators;
 	}
 
-	char* findPriority(const char* op) {
+	int* findPriority(const char* op) {
 
 		op = getOperators(input);
-		priority = new char[contorOperators];
+		priority = new int[contorOperators];
 
 
 		for (int i = 0; i < contorOperators; i++) {
 
 			if (op[i] == '*' || op[i] == '/') {
-				priority[i] = '1';
+				priority[i] = 1;
 			}
 			else {
-				priority[i] = '0';
+				priority[i] = 0;
 			}
 
 		}
@@ -229,10 +301,146 @@ public:
 	}
 
 
-	int test() {
-		cout << endl << (contorOperators);
-		return contorNumValues + 1 / sizeof(numericValues[0]);
+
+
+	int* findPriorityTEST() {
+
+		int counterBrackets = 0;
+		priority = new int[contorOperators];
+
+		for (int i = 0; i < contorOperators; i++) {
+
+
+			if (operators[i] == '*' || operators[i] == '/') {
+				priority[i] = 2;
+			}
+			else if(Util::isRoundedBrackets(operators[i])) {
+				priority[i] = 0;
+			}
+			else {
+				priority[i] = 1;
+
+			}
+
+		}
+
+		for (int i = contorOperators; i > 0; i--) {
+			if (operators[i] == ')') {
+				counterBrackets++;
+			}
+		}
+
+		for (int i = 0; i < contorOperators; i++) {
+			if (operators[i] == '(') {
+				for (int j = 0; j < contorOperators; j++) {
+					if (operators[j] == ')') {
+						for (int k = i + 1; k < j - 1; k++) {
+
+							//priority[k]++;
+
+							if (operators[k] == '*' || operators[k] == '/') {
+								priority[k] = priority[k] + counterBrackets;
+							}
+							else if (Util::isRoundedBrackets(operators[k])) {
+								priority[k] = 0;
+							}
+							else if(operators[k] == '+' || operators[k] == '-') {
+								priority[k] = priority[k]+counterBrackets;
+
+							}
+						}
+					}
+				}
+				counterBrackets--;
+				cout << endl;
+				//for (int i = 0; i < contorOperators; i++) {
+				//	cout << priority[i] << " ";
+				//}
+				break;
+			}
+
+			
+		}
+
+		//for (int i = 0; i < contorOperators; i++) {
+		//	if (operators[i] == '(') {
+		//		for (int j = contorOperators; j > 0; j--) {
+		//			if (operators[j] == ')') {
+		//				int counterBrackets = 0;
+		//				counterBrackets++;
+		//				for (int k = i + 1; k < j - 1; k++) {
+		//					/*if (Util::isOperator(operators[k])) {
+		//						priority[k]++;
+		//					}*/
+
+		//					if (operators[k] == '*' || operators[k] == '/') {
+		//						priority[k] = priority[k] + 2 + counterBrackets;
+		//					}
+		//					else if (Util::isRoundedBrackets(operators[k])) {
+		//						priority[k] = 0;
+		//					}
+		//					else if (operators[k] == '+' || operators[k] == '-') {
+		//						priority[k] = priority[k] +1+counterBrackets;
+
+		//					}
+		//				}
+		//			}
+		//		}
+		//	}
+		//}
+
+		cout << endl;
+		for (int i = 0; i < contorOperators; i++) {
+			cout << priority[i] << " ";
+		}
+
+		return priority;
+
 	}
+
+	char* parseOperatorsTEST(const char* input) {
+
+		char* extractedOperators = nullptr;
+		int extractedOperatorsContor = 0;
+
+		for (int i = 0; i <= strlen(input); i++) {
+			if (Util::isOperator(input[i]) || Util::isRoundedBrackets(input[i])) {
+				char* newExtractedOperators = new char[extractedOperatorsContor + 1];
+
+				for (int j = 0; j < extractedOperatorsContor; j++) {
+					newExtractedOperators[j] = extractedOperators[j];
+				}
+
+				newExtractedOperators[extractedOperatorsContor] = input[i];
+
+				delete[] extractedOperators; //dezaloc memoria
+				extractedOperators = newExtractedOperators;
+
+				extractedOperatorsContor++;
+				contorOperators++;
+			}
+		}
+
+		contorOperators = extractedOperatorsContor;
+
+		cout << endl;
+
+		for (int i = 0; i < extractedOperatorsContor; i++) {
+			cout << extractedOperators[i] << " ";
+		}
+
+		return extractedOperators;
+	}
+
+	char* getOperatorsTEST() {
+		return this->operators = parseOperatorsTEST(input);
+	}
+
+	double* getNumericValuesTEST() {
+		return this->numericValues = parseNumericValues(input);
+	}
+
+
 
 
 
@@ -275,172 +483,177 @@ public:
 		return result;
 	}
 
-	double findResult(double* numVal, const char* op, const char* priority) { //PT TESTE //momentan imi ia operatiile pe rand => 12+9/5 il va lua ca 12+9=21/5=4.2
+	//double findResult(double* numVal, const char* op, int* priority) { //PT TESTE //momentan imi ia operatiile pe rand => 12+9/5 il va lua ca 12+9=21/5=4.2
 
-		numVal = getNumericValues(input);
-		op = getOperators(input);
-		priority = findPriority(op);
+	//	numVal = getNumericValues(input);
+	//	op = getOperators(input);
+	//	priority = findPriority(op);
 
-		double result = 0.0;
+	//	for (int i = 0; i < sizeof(priority) / sizeof(priority[0]); i++) {
 
-		for (int i = 0; i < contorOperators; i++) {
-			//double nextNumber = numericValues[i + 1];
-			//char nextOperator = operators[i];
+	//		int maxPriority = Util::maxPriority(priority);
+	//		int contorDefaultMaxPriority = 0;
 
-			if (priority[i] == '1') {
-				double result2 = numVal[i];
-				double oldResult = numVal[i];
+	//		if (maxPriority == priority[i]) {
+	//			contorDefaultMaxPriority++;
+	//		}
 
-				cout << "Old Res " << oldResult << endl;
+	//		cout << endl << "MAX: " << maxPriority << endl;
 
-					result2 = performOperation(result2, numVal[i + 1], op[i]);
-					cout << endl << "Result -> " << result2;
-					cout << endl << "Num Val " <<i<< " -> " << numVal[i];
-
-					int oldNumValSize = contorNumValues;
-					contorNumValues--;
+	//	}
 
 
-					double* newNumVal = new double[contorNumValues]; //cu newNumVal vreau sa copiez valorile care au ramas(inclusiv rezultatul nou) din numVal 
+	//	double result = 0.0;
 
-					numVal[i+1] = result2;
-					numVal[i] = NULL;
+	//	for (int i = 0; i < contorOperators; i++) {
 
 
 
-					cout << endl << "Num val i+1" << i+1 << " ->" << numVal[i+1] << endl;
 
-					int contorNewVal = 0;
+	//		//double nextNumber = numericValues[i + 1];
+	//		//char nextOperator = operators[i];
 
-					for (int j = 0; j < oldNumValSize+1; j++) {
-						if (numVal[j] != NULL) {
-							newNumVal[contorNewVal] = numVal[j];
-							contorNewVal++;
-						}
-					}
+	//		//if (priority[i] == '1') {
+	//		//	double result2 = numVal[i];
+	//		//	double oldResult = numVal[i];
 
-					//delete[] numVal;
-					//numVal = new double[contorNumValues];
-					//numVal = newNumVal;
+	//		//	cout << "Old Res " << oldResult << endl;
+
+	//		//		result2 = performOperation(result2, numVal[i + 1], op[i]);
+	//		//		cout << endl << "Result -> " << result2;
+	//		//		cout << endl << "Num Val " <<i<< " -> " << numVal[i];
+
+	//		//		int oldNumValSize = contorNumValues;
+	//		//		contorNumValues--;
 
 
-					cout <<endl <<"Updated NewNumVal: ";
-					for (int l = 0; l < contorNumValues; l++) {
-						cout << newNumVal[l] << " ";
-					}
-					cout <<endl <<"Fin" << endl;
+	//		//		double* newNumVal = new double[contorNumValues]; //cu newNumVal vreau sa copiez valorile care au ramas(inclusiv rezultatul nou) din numVal 
+	//		//		priority[i] = '0';
 
-					cout <<endl <<"ContorNUm " << contorNumValues << endl;
 
+	//		//		numVal[i+1] = result2;
+	//		//		numVal[i] = NULL;
+
+
+
+	//		//		cout << endl << "Num val i+1" << i+1 << " ->" << numVal[i+1] << endl;
+
+	//		//		int contorNewVal = 0;
+
+	//		//		for (int j = 0; j < oldNumValSize+1; j++) {
+	//		//			if (numVal[j] != NULL) {
+	//		//				newNumVal[contorNewVal] = numVal[j];
+	//		//				contorNewVal++;
+	//		//			}
+	//		//		}
+
+	//		//		int priorityCheck = 0;
+	//		//		for (int k = 0; k < contorOperators; k++) {
+	//		//			if (priority[i] != '1') {
+	//		//				priorityCheck++;
+	//		//			}
+	//		//		}
+
+	//		//		if (priorityCheck == contorOperators) {
+	//		//			delete[] numVal;
+	//		//		numVal = new double[contorNumValues];
+
+	//		//		for (int k = 0; k < contorNumValues; k++) {
+	//		//			numVal[k] = newNumVal[k];
+	//		//		}
+
+	//		//		}
+	//		//		//delete[] numVal;
+	//		//		//numVal = new double[contorNumValues];
+	//		//		//numVal = newNumVal;
+
+	//		//		cout << endl << "NumVal: ";
+	//		//		for (int l = 0; l < contorNumValues; l++) {
+	//		//			cout << numVal[l] << " ";
+	//		//		}
+
+
+	//		//		cout <<endl <<"NewNumVal: ";
+	//		//		for (int l = 0; l < contorNumValues; l++) {
+	//		//			cout << newNumVal[l] << " ";
+	//		//		}
+	//		//		cout <<endl <<"Fin" << endl;
+
+	//		//		cout <<endl <<"ContorNUm " << contorNumValues << endl;
+
+	//		//}
+	//		//cout << endl;
+	//	}
+
+
+
+
+	//	cout << endl << result;
+	//	return result;
+	//}
+
+
+	//Reverse Polish Notation
+
+	double RPN(string expression) {
+		int i = 0;
+		float v1, v2, result;
+		v1 = result = v2 = 0.0;
+
+		string tok = "";
+
+		while (i < expression.length()) {
+			//Skip white space
+			while (isspace(expression[i])) {
+				i++;
 			}
-			cout << endl;
+			//Check for digits and .
+			if (Util::isDigit(expression[i]) || expression[i] == '.') {
+				while (Util::isDigit(expression[i]) || expression[i] == '.') {
+					tok += expression[i];
+					i++;
+				}
+				//Push on stack number.
+				stack.push(atof(tok.c_str()));
+				tok = "";
+			}
+			//Check for operator
+			else if (Util::isOperator(expression[i])) {
+				if (expression[i] == '+') {
+					v1 = stack.pop();
+					v2 = stack.pop();
+					result = (v1 + v2);
+				}
+				if (expression[i] == '-') {
+					v1 = stack.pop();
+					v2 = stack.pop();
+					result = v2 - v1;
+				}
+				if (expression[i] == '*') {
+					v1 = stack.pop();
+					v2 = stack.pop();
+					result = (v1 * v2);
+				}
+				if (expression[i] == '/') {
+					v1 = stack.pop();
+					v2 = stack.pop();
+					result = (v2 / v1);
+				}
+				//INC Counter
+				i++;
+				//Push result onto stack
+				stack.push(result);
+			}
+			else {
+				cout << "Invaild Expression." << endl;
+				break;
+			}
 		}
-
-		//for (int i = 0; i < contorOperators; i++) {
-		//	double nextNumber = numericValues[i + 1];
-		//	char nextOperator = operators[i];
-
-		//	char oldNextOperator = nextOperator;
-		//	/*cout << endl << nextNumber;
-		//	cout << endl << endl;*/
-
-		//	if (priority[i] == '1') {
-		//		for(int j = 0; j< contorNumValues; j++){ 
-		//			double result = numVal[j];
-		//			double oldResult = result; 
-		//			double oldNextNum = nextNumber;
-
-
-		//			result = performOperation(result, nextNumber, nextOperator);
-		//			cout << endl << "Next Op" << nextOperator;
-
-
-		//			cout <<endl <<"Rezultat " << result;
-		//			//cout << endl << "contorNumValues " << contorNumValues;
-
-
-		//			//AM MICSORAT VECTORUL numVal SI ADAUGAT VALORILE NOI
-		//			int oldContorNumValues = contorNumValues;
-		//			contorNumValues -= 1;
-
-
-		//			double* newNumVal = nullptr;
-		//			delete[] newNumVal;
-		//			newNumVal = new double[contorNumValues];
-
-		//			int contorNewVal = 0;
-
-		//				for (int i = 0; i < contorNumValues+1; ++i) {
-		//					//cout << endl<<"NumVAL I" << numVal[i]<<endl;
-
-		//					if (numVal[i] != oldResult) {
-		//						if (numVal[i] == oldNextNum) {
-		//							numVal[i] = result;
-		//						}
-		//						newNumVal[contorNewVal] = numVal[i];
-		//						++contorNewVal;
-		//					}
-
-
-		//					if (contorNewVal > contorNumValues) {
-		//						contorNewVal--;
-		//					}
-		//				}
-
-		//			delete[] numVal;
-		//			numVal = new double[oldContorNumValues];
-		//			numVal = newNumVal;
-		//			
-
-		//			cout << endl << "vector vechi ";
-		//			for (int i = 0; i < contorNumValues; i++) {
-		//				cout << numVal[i] << " ";
-		//			}
-
-		//			int oldContorOperators = contorOperators;
-		//			contorOperators -= 1;
-
-		//			char* newOp = nullptr;
-		//			delete[] newOp;
-		//			newOp = new char[contorOperators];
-
-		//			int contorNewOp = 0;
-
-		//			for (int k = 0; k < contorOperators + 1; k++) {
-
-		//				if (op[k] != oldNextOperator) {
-		//					newOp[contorNewOp] = op[k];
-		//					++contorNewOp;
-
-		//				}
-
-
-		//				if (contorNewOp > contorOperators) {
-		//					contorNewOp--;
-		//				}
-		//			}
-
-		//			delete[] op;
-		//			numVal = new double[oldContorOperators];
-		//			op = newOp;
-		//			priority = findPriority(newOp);
-
-		//			cout << endl << "op vechi ";
-		//		}
-
-		//		// AICI VREAU SA MICSOREZ VECTORUL CU OPERATORI momentan nu merge bine
-		//		// DUPA ASTA TREBUIE SA VAD PRIORITATEA DIN NOII VECTORI IAR DACA NU MAI EXISTA VREO PRIORITATE = 1 SE VA FACE CALCULUL NORMAL
-		//		
-		//		
-		//	}
-		//	
-		//}
-
-
-
-		cout << endl << result;
-		return result;
+		//Return answer
+		return stack.pop();
 	}
+
+
 
 
 	Expressions() {
@@ -459,6 +672,154 @@ public:
 	friend class OperatoriMatematici;
 
 };
+
+
+
+class Expr4 {
+	char* input = nullptr;
+	Stack stack;
+
+public:
+
+
+	Expr4() {
+
+	}
+
+	~Expr4() {
+		delete[] this->input;
+	}
+
+	char* getInput() {
+		if (input == nullptr) {
+			return nullptr;
+		}
+		cout << this->input << endl;
+		return Util::copiereString(this->input);
+
+	}
+
+	void setInput(const char* input) {
+		delete[] this->input;
+		this->input = Util::copiereString(input);
+	}
+
+	float performOp(double a, double b, char op) { //GOOD
+		switch (op) {
+		case '+':
+			return a + b;
+		case '-':
+			return b - a;
+		case '*':
+			return a * b;
+		case '/':
+			if (a == 0)
+				cout << "Division by 0 is impossible.";
+			return b / a;
+		case '^':
+			float pow = b;
+			for (int i = 1; i < a; i++) {
+				pow = pow*b;
+			}
+			return pow;
+		}
+
+		return 0.0;
+	}
+
+
+	string infixToPostfix() //GOOD
+	{
+		string result;
+
+		for (int i = 0; i < strlen(input); i++) {
+			char c = input[i];
+
+
+			if (Util::isDigit(c)){
+				result += c;
+				//aici semicol
+				/*if (Util::isSemicolumn(c)) {
+					result += c;
+					continue;
+				}*/
+				if (Util::isOperator(input[i + 1]) || Util::isExpresion(input[i+1])) {
+					result += ' ';
+				}
+			}
+			else if (c == '(') {
+				stack.push('(');
+			}
+			else if (c == ')') {
+				while (stack.top() != '(') {
+					result += stack.pop();
+					//stack.pop();
+				}
+				stack.pop();
+			}
+			else {
+				while (!stack.empty()
+					&& Util::precedence(c) <= Util::precedence(stack.top())) {
+					result += stack.pop();
+					//stack.pop();
+				}
+				stack.push(c);
+			}
+		}
+
+		while (!stack.empty()) {
+			result += stack.pop();
+		}
+
+		cout << result << endl;
+		return result;
+
+	}
+
+	float evaluatePostfix(string postfix) { //GOOD
+
+		postfix = infixToPostfix();
+		Stack s(postfix.length());
+
+		cout << endl<<"OK";
+
+		for (int i = 0; i < postfix.length(); i++) {
+			char c = postfix[i];
+
+			if (c == ' ' || Util::isSemicolumn(c)) continue;
+			else if (Util::isDigit(c)) {
+				float num = 0;
+
+				while (Util::isDigit(c)) {
+					num = num * 10 + (c - '0');
+					i++;
+					c = postfix[i];
+				}
+				i--;
+
+				s.push(num);
+			}
+			else {
+				float val1 = s.top();
+				s.pop();
+				float val2 = s.top();
+				s.pop();
+
+				s.push(performOp(val1, val2, c));
+				
+			}
+		}
+
+		float result = s.pop();
+		cout <<"AICI "<< result << endl;
+		return result;
+		
+	}
+
+
+};
+
+
 
 class Calculator: public Expressions {
 
@@ -518,12 +879,6 @@ public:
 
 
 
-
-class OperatoriMatematici : public Expressions, public Calculator {
-	
-};
-
-
 int main() {
 
 	//Calculator c1;
@@ -536,40 +891,24 @@ int main() {
 	const char* input2 = "12*9+10/2";
 	double* numVal2 = new double[4] {12, 9, 10, 2};
 	char* op2 = new char[3] {'*', '+', '/'};
-	char* priority = new char[3] {'1', '0', '1'};
-
-	/*Expressions exp3(input);
-	exp3.parseNumericValues("12.1+3-5");*/
+	int* priority = new int[3] {1, 0, 1};
 
 
-	/*Expressions exp1("12+9/5");
+	cout << endl << endl;
+
+
+	//"40+(5-1)*2"
+
+	Expr4 exp1;
+	exp1.setInput("(2+1)^3"); //40+4*2 = 48   9.4
 	exp1.getInput();
-	exp1.getNumericValues();
-	exp1.getOperators();
-	exp1.test();*/
+	exp1.evaluatePostfix("(2+1)^3");
+	exp1.infixToPostfix();
 
-	Expressions exp2(input2);
+/*	Expr4 exp2;
+	exp2.setInput("40.5+(5-1.1)*2");*/ //40+4*2 = 48
 	//exp2.getInput();
-	//exp2.getNumericValues();
-	//exp2.getOperators();
-	exp2.findResult(numVal2, op2, priority);
-	//exp2.findPriority(op2);
-
-	cout << endl <<endl;
-
-	/*Expressions exp2("2+9+1");
-	exp2.getNumericValues();
-	exp2.getOperators();
-	exp2.afisare();*/
-
-	//exp2.afisare();
-
-	/*int* extractedNumbers = exp1.setNumericValues(input);
-	cout << endl;
-
-	for (int i = 0; extractedNumbers[i]; i++) {
-		cout << extractedNumbers[i] << " ";
-	}*/
+	//exp1.evaluatePostfix("40.5+(5-1.1)*2");
 
 
 	/*while (true) {

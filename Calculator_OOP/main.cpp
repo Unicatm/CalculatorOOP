@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#include <cmath>
 
 using namespace std;
 
@@ -161,531 +162,6 @@ public:
 };
 
 
-class Expressions {
-	char* input = nullptr;
-	double* numericValues = nullptr;
-	char* operators = nullptr;
-
-	int contorOperators = 0;
-	int contorNumValues = 0;
-
-	int* priority = nullptr;
-
-	Stack stack;
-
-public:
-
-
-	char* getInput() {
-		if (input == nullptr) {
-			return nullptr;
-		}
-		cout << this->input << endl;
-		return Util::copiereString(this->input);
-
-	}
-
-	double* getNumericValues(char* input) {
-		return this->numericValues = parseNumericValues(input);
-	}
-
-	char* getOperators(char* input) {
-		return this->operators = parseOperators(input);
-	}
-
-	void setInput(const char* input) {
-		delete[] this->input;
-		this->input = Util::copiereString(input);
-	}
-
-
-
-
-	double* parseNumericValues(const char* input) {
-		double* extractedNum = nullptr;  //vectorul ce va retine toate numerele din input
-		int tempContor = 0;
-
-		char* tempNum = new char[20];  //un char care va tine minte fiecare numar si o va stoca in extractedNum 
-
-		int extractedNumContor = 0;
-		int contor = 0;
-
-		for (int i = 0; i <= strlen(input); i++) {
-			if (Util::isDigit(input[i])) {  //daca e cifra, cifra se stocheaza in tempNum
-				tempNum[tempContor] = input[i];
-				tempContor++;
-			}
-			else if (Util::isSemicolon(input[i])) {
-				tempNum[tempContor] = input[i];
-				tempContor++;
-				//cout << endl << "Hi " << tempNum;
-			}
-			else if (tempContor > 0) {   // daca input[i] nu mai e cifra atunci ceea ce e in tempContor va fi transformat in int si va fi pus extractedNum
-				tempNum[tempContor] = '\0';
-				double num = stod(tempNum);
-				//cout << endl << "Hello " << num;
-				contor++;
-
-				double* newExtractedNum = new double[extractedNumContor + 1]; // newExtractedNum se mareste odata cu gasirea unui numar
-
-				for (int j = 0; j < extractedNumContor; j++) {  //copiez ceea ce e in extractedNum in newExtractedNum
-					newExtractedNum[j] = extractedNum[j];
-				}
-				newExtractedNum[extractedNumContor] = num; //adaug noua valoare la finalul newExtractedNum
-
-				delete[] extractedNum; //dezaloc memoria
-				extractedNum = newExtractedNum;
-
-				memset(tempNum, '\0', 20);  //golesc tempNum si tempContor pentru a putea baga in tempNum urmatorul numar: 12+9/5 => se sterge valoarea 12 pt a putea pune valoarea 9 in tempNum
-				tempContor = 0;
-				extractedNumContor++;
-			}
-		}
-
-
-		contorNumValues = extractedNumContor;
-
-		cout << endl;
-		for (int i = 0; i < extractedNumContor; i++) {
-			cout << extractedNum[i] << " ";
-		}
-
-		delete[] tempNum;
-		return extractedNum;
-	}
-
-	char* parseOperators(const char* input) {
-
-		char* extractedOperators = nullptr;
-		int extractedOperatorsContor = 0;
-
-		for (int i = 0; i <= strlen(input); i++) {
-			if (Util::isOperator(input[i])) {
-				char* newExtractedOperators = new char[extractedOperatorsContor + 1];
-
-				for (int j = 0; j < extractedOperatorsContor; j++) {
-					newExtractedOperators[j] = extractedOperators[j];
-				}
-
-				newExtractedOperators[extractedOperatorsContor] = input[i];
-
-				delete[] extractedOperators; //dezaloc memoria
-				extractedOperators = newExtractedOperators;
-
-				extractedOperatorsContor++;
-				contorOperators++;
-			}
-		}
-
-		contorOperators = extractedOperatorsContor;
-
-		cout << endl;
-
-		for (int i = 0; i < extractedOperatorsContor; i++) {
-			cout << extractedOperators[i] << " ";
-		}
-
-		return extractedOperators;
-	}
-
-	int* findPriority(const char* op) {
-
-		op = getOperators(input);
-		priority = new int[contorOperators];
-
-
-		for (int i = 0; i < contorOperators; i++) {
-
-			if (op[i] == '*' || op[i] == '/') {
-				priority[i] = 1;
-			}
-			else {
-				priority[i] = 0;
-			}
-
-		}
-		
-		/*cout << endl<<"Priority ";
-		for (int i = 0; i < contorOperators; i++) {
-			cout << priority[i] << " ";
-		}*/
-		return priority;
-	}
-
-
-
-
-	int* findPriorityTEST() {
-
-		int counterBrackets = 0;
-		priority = new int[contorOperators];
-
-		for (int i = 0; i < contorOperators; i++) {
-
-
-			if (operators[i] == '*' || operators[i] == '/') {
-				priority[i] = 2;
-			}
-			else if(Util::isRoundedBrackets(operators[i])) {
-				priority[i] = 0;
-			}
-			else {
-				priority[i] = 1;
-
-			}
-
-		}
-
-		for (int i = contorOperators; i > 0; i--) {
-			if (operators[i] == ')') {
-				counterBrackets++;
-			}
-		}
-
-		for (int i = 0; i < contorOperators; i++) {
-			if (operators[i] == '(') {
-				for (int j = 0; j < contorOperators; j++) {
-					if (operators[j] == ')') {
-						for (int k = i + 1; k < j - 1; k++) {
-
-							//priority[k]++;
-
-							if (operators[k] == '*' || operators[k] == '/') {
-								priority[k] = priority[k] + counterBrackets;
-							}
-							else if (Util::isRoundedBrackets(operators[k])) {
-								priority[k] = 0;
-							}
-							else if(operators[k] == '+' || operators[k] == '-') {
-								priority[k] = priority[k]+counterBrackets;
-
-							}
-						}
-					}
-				}
-				counterBrackets--;
-				cout << endl;
-				//for (int i = 0; i < contorOperators; i++) {
-				//	cout << priority[i] << " ";
-				//}
-				break;
-			}
-
-			
-		}
-
-		//for (int i = 0; i < contorOperators; i++) {
-		//	if (operators[i] == '(') {
-		//		for (int j = contorOperators; j > 0; j--) {
-		//			if (operators[j] == ')') {
-		//				int counterBrackets = 0;
-		//				counterBrackets++;
-		//				for (int k = i + 1; k < j - 1; k++) {
-		//					/*if (Util::isOperator(operators[k])) {
-		//						priority[k]++;
-		//					}*/
-
-		//					if (operators[k] == '*' || operators[k] == '/') {
-		//						priority[k] = priority[k] + 2 + counterBrackets;
-		//					}
-		//					else if (Util::isRoundedBrackets(operators[k])) {
-		//						priority[k] = 0;
-		//					}
-		//					else if (operators[k] == '+' || operators[k] == '-') {
-		//						priority[k] = priority[k] +1+counterBrackets;
-
-		//					}
-		//				}
-		//			}
-		//		}
-		//	}
-		//}
-
-		cout << endl;
-		for (int i = 0; i < contorOperators; i++) {
-			cout << priority[i] << " ";
-		}
-
-		return priority;
-
-	}
-
-	char* parseOperatorsTEST(const char* input) {
-
-		char* extractedOperators = nullptr;
-		int extractedOperatorsContor = 0;
-
-		for (int i = 0; i <= strlen(input); i++) {
-			if (Util::isOperator(input[i]) || Util::isRoundedBrackets(input[i])) {
-				char* newExtractedOperators = new char[extractedOperatorsContor + 1];
-
-				for (int j = 0; j < extractedOperatorsContor; j++) {
-					newExtractedOperators[j] = extractedOperators[j];
-				}
-
-				newExtractedOperators[extractedOperatorsContor] = input[i];
-
-				delete[] extractedOperators; //dezaloc memoria
-				extractedOperators = newExtractedOperators;
-
-				extractedOperatorsContor++;
-				contorOperators++;
-			}
-		}
-
-		contorOperators = extractedOperatorsContor;
-
-		cout << endl;
-
-		for (int i = 0; i < extractedOperatorsContor; i++) {
-			cout << extractedOperators[i] << " ";
-		}
-
-		return extractedOperators;
-	}
-
-	char* getOperatorsTEST() {
-		return this->operators = parseOperatorsTEST(input);
-	}
-
-	double* getNumericValuesTEST() {
-		return this->numericValues = parseNumericValues(input);
-	}
-
-
-
-
-
-	double performOperation(double num1, double num2, char op) {
-
-		switch (op) {
-		case '+':
-			return num1 + num2;
-		case '-':
-			return num1 - num2;
-		case '*':
-			return num1 * num2;
-		case '/':
-			if (num2 != 0) {
-				return num1 / num2;
-			}
-			else {
-				throw invalid_argument("Nu se poate efectua impartirea la 0!");
-			}
-		default:
-			throw invalid_argument("Operator invalid!");
-		}
-	}
-
-	double findResult(char* userInput) {  //PT CLASA CALCULATOR   //momentan imi ia operatiile pe rand => 12+9/5 il va lua ca 12+9=21/5=4.2
-		
-		numericValues = getNumericValues(userInput);
-		operators = getOperators(userInput);
-
-		double result = numericValues[0];
-
-		for (int i = 0; i < contorOperators; i++) {
-			double nextNumber = numericValues[i + 1];
-			char nextOperator = operators[i];
-
-			result = performOperation(result, nextNumber, nextOperator);
-		}
-
-		cout << endl << result;
-		return result;
-	}
-
-	//double findResult(double* numVal, const char* op, int* priority) { //PT TESTE //momentan imi ia operatiile pe rand => 12+9/5 il va lua ca 12+9=21/5=4.2
-
-	//	numVal = getNumericValues(input);
-	//	op = getOperators(input);
-	//	priority = findPriority(op);
-
-	//	for (int i = 0; i < sizeof(priority) / sizeof(priority[0]); i++) {
-
-	//		int maxPriority = Util::maxPriority(priority);
-	//		int contorDefaultMaxPriority = 0;
-
-	//		if (maxPriority == priority[i]) {
-	//			contorDefaultMaxPriority++;
-	//		}
-
-	//		cout << endl << "MAX: " << maxPriority << endl;
-
-	//	}
-
-
-	//	double result = 0.0;
-
-	//	for (int i = 0; i < contorOperators; i++) {
-
-
-
-
-	//		//double nextNumber = numericValues[i + 1];
-	//		//char nextOperator = operators[i];
-
-	//		//if (priority[i] == '1') {
-	//		//	double result2 = numVal[i];
-	//		//	double oldResult = numVal[i];
-
-	//		//	cout << "Old Res " << oldResult << endl;
-
-	//		//		result2 = performOperation(result2, numVal[i + 1], op[i]);
-	//		//		cout << endl << "Result -> " << result2;
-	//		//		cout << endl << "Num Val " <<i<< " -> " << numVal[i];
-
-	//		//		int oldNumValSize = contorNumValues;
-	//		//		contorNumValues--;
-
-
-	//		//		double* newNumVal = new double[contorNumValues]; //cu newNumVal vreau sa copiez valorile care au ramas(inclusiv rezultatul nou) din numVal 
-	//		//		priority[i] = '0';
-
-
-	//		//		numVal[i+1] = result2;
-	//		//		numVal[i] = NULL;
-
-
-
-	//		//		cout << endl << "Num val i+1" << i+1 << " ->" << numVal[i+1] << endl;
-
-	//		//		int contorNewVal = 0;
-
-	//		//		for (int j = 0; j < oldNumValSize+1; j++) {
-	//		//			if (numVal[j] != NULL) {
-	//		//				newNumVal[contorNewVal] = numVal[j];
-	//		//				contorNewVal++;
-	//		//			}
-	//		//		}
-
-	//		//		int priorityCheck = 0;
-	//		//		for (int k = 0; k < contorOperators; k++) {
-	//		//			if (priority[i] != '1') {
-	//		//				priorityCheck++;
-	//		//			}
-	//		//		}
-
-	//		//		if (priorityCheck == contorOperators) {
-	//		//			delete[] numVal;
-	//		//		numVal = new double[contorNumValues];
-
-	//		//		for (int k = 0; k < contorNumValues; k++) {
-	//		//			numVal[k] = newNumVal[k];
-	//		//		}
-
-	//		//		}
-	//		//		//delete[] numVal;
-	//		//		//numVal = new double[contorNumValues];
-	//		//		//numVal = newNumVal;
-
-	//		//		cout << endl << "NumVal: ";
-	//		//		for (int l = 0; l < contorNumValues; l++) {
-	//		//			cout << numVal[l] << " ";
-	//		//		}
-
-
-	//		//		cout <<endl <<"NewNumVal: ";
-	//		//		for (int l = 0; l < contorNumValues; l++) {
-	//		//			cout << newNumVal[l] << " ";
-	//		//		}
-	//		//		cout <<endl <<"Fin" << endl;
-
-	//		//		cout <<endl <<"ContorNUm " << contorNumValues << endl;
-
-	//		//}
-	//		//cout << endl;
-	//	}
-
-
-
-
-	//	cout << endl << result;
-	//	return result;
-	//}
-
-
-	//Reverse Polish Notation
-
-	double RPN(string expression) {
-		int i = 0;
-		float v1, v2, result;
-		v1 = result = v2 = 0.0;
-
-		string tok = "";
-
-		while (i < expression.length()) {
-			//Skip white space
-			while (isspace(expression[i])) {
-				i++;
-			}
-			//Check for digits and .
-			if (Util::isDigit(expression[i]) || expression[i] == '.') {
-				while (Util::isDigit(expression[i]) || expression[i] == '.') {
-					tok += expression[i];
-					i++;
-				}
-				//Push on stack number.
-				stack.push(atof(tok.c_str()));
-				tok = "";
-			}
-			//Check for operator
-			else if (Util::isOperator(expression[i])) {
-				if (expression[i] == '+') {
-					v1 = stack.pop();
-					v2 = stack.pop();
-					result = (v1 + v2);
-				}
-				if (expression[i] == '-') {
-					v1 = stack.pop();
-					v2 = stack.pop();
-					result = v2 - v1;
-				}
-				if (expression[i] == '*') {
-					v1 = stack.pop();
-					v2 = stack.pop();
-					result = (v1 * v2);
-				}
-				if (expression[i] == '/') {
-					v1 = stack.pop();
-					v2 = stack.pop();
-					result = (v2 / v1);
-				}
-				//INC Counter
-				i++;
-				//Push result onto stack
-				stack.push(result);
-			}
-			else {
-				cout << "Invaild Expression." << endl;
-				break;
-			}
-		}
-		//Return answer
-		return stack.pop();
-	}
-
-
-
-
-	Expressions() {
-
-	}
-
-	Expressions(const char* userInput) {
-		this->setInput(userInput);
-	}
-
-	~Expressions() {
-		delete[] this->input;
-		//cout<<endl << "deleted";
-	}
-
-	friend class OperatoriMatematici;
-
-};
-
-
 
 class Expr4 {
 	char* input = nullptr;
@@ -725,23 +201,26 @@ public:
 		case '*':
 			return a * b;
 		case '/':
-			if (a == 0)
+			if (a == 0){
 				cout << "Division by 0 is impossible.";
+				return 0.0;
+			}
 			return b / a;
 		case '^':
-			float pow = b;
-			for (int i = 1; i < a; i++) {
-				pow = pow*b;
+		
+			return pow(b,a);
+		
+		case '#':
+			if (b <= 0 || a <= 0) {
+				return 0.0;
 			}
-			return pow;
+			return pow(b, 1 / a);
 		}
 
 		return 0.0;
 	}
 
-
-
-	char* infixToPostfixTEST(const char* infix) //TEST TO CHAR*
+	char* infixToPostfix(const char* infix)
 	{
 		string result;
 		infix = Util::removeSpaces(infix);
@@ -801,9 +280,9 @@ public:
 
 	}
 
-	float evaluatePostfixTEST(const char* infix) { //TEST
+	float evaluatePostfix(const char* infix) { 
 
-		char* postfix = infixToPostfixTEST(infix);
+		char* postfix = infixToPostfix(infix);
 
 		Stack s(strlen(infix));
 
@@ -869,10 +348,14 @@ public:
 		}
 
 		float result = s.pop();
-		cout << "Result " << result << endl;
+		//cout << "Result " << result << endl;
 		return result;
 
 	}
+
+
+	//SUPRAINCARCAREA A 2 OPERATORI
+
 
 
 };
@@ -908,7 +391,7 @@ public:
 
 		while (true) {
 
-			cout<<endl <<"Introdu ecuatia: ";
+			cout<<endl <<"Enter an equation: ";
 			char inputUser[100];
 			cin.getline(inputUser, ' ');
 
@@ -918,7 +401,7 @@ public:
 
 			Expr4::setInput(inputUser);
 			//Expr4::getInput();
-			cout << "Result: " << Expr4::evaluatePostfixTEST(inputUser) << endl;
+			cout << "Result: " << Expr4::evaluatePostfix(inputUser) << endl;
 			cout<<endl <<"___________"<< endl;
 		}
 
@@ -933,7 +416,11 @@ public:
 	}
 
 	~Calculator() {
-		delete[] this->input;
+		if (this->input != nullptr) {
+			delete[] this->input;
+			this->input = nullptr;
+		}
+
 	}
 
 };

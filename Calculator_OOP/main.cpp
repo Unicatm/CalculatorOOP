@@ -16,20 +16,29 @@ public:
 		return copie;
 	}
 
-	static char* micsorareOperatorCuUnu(const char* operators, int contorOperators) {
-		char* newOperatorVect = new char[contorOperators - 1];
+	static char* removeSpaces(const char* input) {
 
-		for (int j = 1; j < contorOperators; j++) {
-			newOperatorVect[j-1] = operators[j];
+		int counterSpaces = 0;
+
+		for (int i = 0; i < strlen(input); i++) {
+			if (input[i] == ' ') {
+				counterSpaces++;
+			}
 		}
 
-		delete[] operators;
-		operators = newOperatorVect;
+		char* newInput = new char[strlen(input) + 1 - counterSpaces];
 
-		return newOperatorVect;
-
+		int counterNewInput = 0;
+		for (int i = 0; i < strlen(input); i++) {
+			if (input[i] != ' ') {
+				newInput[counterNewInput] = input[i];
+				counterNewInput++;
+			}
+		}
+		newInput[counterNewInput] = '\0';
+		
+		return newInput;
 	}
-
 
 	static int precedence(char op) {
 		if (op == '+' || op == '-') {
@@ -51,7 +60,7 @@ public:
 		return c >= '0' && c <= '9';
 	}
 
-	static bool isSemicolumn(char c) {
+	static bool isSemicolon(char c) {
 		return c == '.' || c == ',';
 	}
 
@@ -206,7 +215,7 @@ public:
 				tempNum[tempContor] = input[i];
 				tempContor++;
 			}
-			else if (Util::isSemicolumn(input[i])) {
+			else if (Util::isSemicolon(input[i])) {
 				tempNum[tempContor] = input[i];
 				tempContor++;
 				//cout << endl << "Hi " << tempNum;
@@ -735,14 +744,14 @@ public:
 	char* infixToPostfixTEST(const char* infix) //TEST TO CHAR*
 	{
 		string result;
+		infix = Util::removeSpaces(infix);
+
 
 		for (int i = 0; i < strlen(infix) + 1; i++) {
 			char c = infix[i];
 
-			//e nou de la || in colo
-			if (Util::isDigit(c) || (Util::isSemicolumn(c) && Util::isDigit(infix[i + 1]))) {
-				//e nou de la while la i--;
-				while (Util::isDigit(c) || Util::isSemicolumn(c)) {
+			if (Util::isDigit(c) || (Util::isSemicolon(c) && Util::isDigit(infix[i + 1]))) {
+				while (Util::isDigit(c) || Util::isSemicolon(c)) {
 					if (c == ',') {
 						c = '.';
 					}
@@ -785,9 +794,9 @@ public:
 		}
 
 
-		/*for (int i = 0; i < result.length(); i++) {
-			cout << charResult[i];
-		}*/
+		//for (int i = 0; i < result.length(); i++) {
+		//	cout << charResult[i];
+		//}
 		return charResult;
 
 	}
@@ -799,116 +808,54 @@ public:
 		Stack s(strlen(infix));
 
 		//cout << endl << "OK";
+		string tempNum = "";
+
+		bool semicolonFound = false;
+		float decimalPart = 1;
+
 
 
 		for (int i = 0; i < strlen(postfix); i++) {
 			char c = postfix[i];
 
 			if (c == ' ') continue;
-			else if (Util::isDigit(c)) {
+			else if (Util::isDigit(c) || Util::isSemicolon(c)) {
 				float num = 0;
 
-				while (Util::isDigit(c)) {
-					num = num * 10 + (c - '0');
-					i++;
-					c = postfix[i];
+				if (Util::isSemicolon(c)) {
+					semicolonFound = true;
 				}
-				i--;
 
-				s.push(num);
-			}
-			else {
-				float val1 = s.top();
-				s.pop();
-				float val2 = s.top();
-				s.pop();
+				while (Util::isDigit(c) || Util::isSemicolon(c)) {
 
-				s.push(performOp(val1, val2, c));
-
-			}
-		}
-
-		float result = s.pop();
-		//cout << "AICI " << result << endl;
-		return result;
-
-	}
-
-
-
-	string infixToPostfix() //GOOD
-	{
-		string result;
-
-		for (int i = 0; i < strlen(input)+1; i++) {
-			char c = input[i];
-
-			//e nou de la || in colo
-			if (Util::isDigit(c) || (Util::isSemicolumn(c) && Util::isDigit(input[i+1]))) {
-				//e nou de la while la i--;
-				while (Util::isDigit(c) || Util::isSemicolumn(c)) {
-					if (c == ',') {
-						c = '.';
+					if (semicolonFound) {
+						decimalPart *= 0.1;
 					}
-					result += c;
-					c = input[++i];
-				}
-				i--;
-				
-				if (Util::isOperator(input[i + 1]) || Util::isExpresion(input[i+1])) {
-					result += ' ';
-				}
-			}
-			else if (c == '(') {
-				stack.push('(');
-			}
-			else if (c == ')') {
-				while (stack.top() != '(') {
-					result += stack.pop();
-				}
-				stack.pop();
-			}
-			else {
-				while (!stack.empty()
-					&& Util::precedence(c) <= Util::precedence(stack.top())) {
-					result += stack.pop();
-				}
-				stack.push(c);
-			}
-		}
 
-		while (!stack.empty()) {
-			result += stack.pop();
-		}
+					tempNum += c;
+					//cout << tempNum<<endl;
 
-		cout << result << endl;
-		return result;
+					//cout << c << " " << "Decimal Part " << decimalPart<<endl;
+					//num = num * 10 + (c - '0');
 
-	}
-
-	float evaluatePostfix(string postfix) { //GOOD
-
-		postfix = infixToPostfix();
-		Stack s(postfix.length());
-
-		cout << endl<<"OK";
-
-
-		for (int i = 0; i < postfix.length(); i++) {
-			char c = postfix[i];
-
-			if (c == ' ') continue;
-			else if (Util::isDigit(c)) {
-				float num = 0;
-
-				while (Util::isDigit(c)) {
-					num = num * 10 + (c - '0');
 					i++;
 					c = postfix[i];
 				}
 				i--;
 
+				//cout <<"Dupa " << tempNum << endl;
+				num = stold(tempNum);
+				//cout << "Num " << num;
+
 				s.push(num);
+
+				//cout << num << endl;
+
+				semicolonFound = false;
+				decimalPart = 1;
+				tempNum = "";
+				//cout << endl;
+
 			}
 			else {
 				float val1 = s.top();
@@ -917,14 +864,14 @@ public:
 				s.pop();
 
 				s.push(performOp(val1, val2, c));
-				
+
 			}
 		}
 
 		float result = s.pop();
-		cout <<"AICI "<< result << endl;
+		cout << "Result " << result << endl;
 		return result;
-		
+
 	}
 
 
@@ -963,7 +910,7 @@ public:
 
 			cout<<endl <<"Introdu ecuatia: ";
 			char inputUser[100];
-			cin >> inputUser;
+			cin.getline(inputUser, ' ');
 
 			if (strcmp(inputUser, "exit") == 0) {
 				break;
@@ -998,13 +945,15 @@ int main() {
 	Calculator c1;
 	c1.afisareInserare();
 
+
 	//"40+(5-1)*2"
 
 	//Expr4 exp1;
-	//exp1.setInput("(3*2)^2"); //40+4*2 = 48   9.4 10.0
+	//exp1.setInput("1 + 2 * 3"); //40+4*2 = 48   9.4 10.0
 	//exp1.getInput();
-	//exp1.evaluatePostfix("(3*2)^2");
-	//exp1.infixToPostfixTEST();
+	//exp1.evaluatePostfixTEST("2+3*(1+2)");
+	 //exp1.evaluatePostfixTEST("3/2+3+1/3");
+	//exp1.evaluatePostfixTEST("1 + 2 * 3");
 
 /*	Expr4 exp2;
 	exp2.setInput("40.5+(5-1.1)*2");*/ //40+4*2 = 48
@@ -1022,5 +971,5 @@ int main() {
 	//	}
 	//}
 
-	return 0;
+	//return 0;
 }

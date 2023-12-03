@@ -69,6 +69,10 @@ public:
 		return c == '.' || c == ',';
 	}
 
+	static bool isLetter(char c) {
+		return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
+	}
+
 	static bool isOperator(char c) {
 		return c == '+' || c == '-' || c == '/' || c == '*';
 	}
@@ -89,12 +93,6 @@ public:
 		return c == '[' || c == ']';
 	}
 
-	static float scanNum(char ch) {
-		int value;
-		value = ch;
-		return float(value - '0');
-	}
-
 };
 
 
@@ -108,7 +106,7 @@ private:
 public:
 
 
-	Stack(int size = 100) {
+	Stack(int size = 1000) {
 		counterStack = size;
 		stack = new float[counterStack];
 		topStack = -1;
@@ -140,7 +138,7 @@ public:
 
 	 float pop() {
 		 if (empty()) {
-			 cout << "Stack underflow" << endl;
+			 //cout << "Stack underflow" << endl;
 			 return 0;
 		 }
 
@@ -149,7 +147,7 @@ public:
 
 	 float peek() {
 		 if (empty()) {
-			 cout << "Stack is empty" << endl;
+			 //cout << "Stack is empty" << endl;
 			 return 0;
 		 }
 		 return stack[topStack];
@@ -166,8 +164,11 @@ public:
 };
 
 
+
+
 class Expression {
 	char* input = nullptr;
+	bool isInvalidInput = false;
 	Stack stack;
 
 public:
@@ -180,7 +181,9 @@ public:
 	~Expression() {
 		if(this->input != nullptr){
 			delete[] this->input;
+			this->input = nullptr;
 		}
+		this->isInvalidInput = false;
 	}
 
 	char* getInput() {
@@ -188,7 +191,7 @@ public:
 			return nullptr;
 		}
 		//cout << this->input << endl;
-		return Util::copiereString(this->input);
+		Util::copiereString(this->input);
 
 	}
 
@@ -197,6 +200,9 @@ public:
 		this->input = Util::copiereString(input);
 	}
 
+	bool getIsInvalidInput() {
+		return this->isInvalidInput;
+	}
 
 	float performOp(float a, float b, char op) { //GOOD
 		switch (op) {
@@ -229,11 +235,37 @@ public:
 	char* infixToPostfix(const char* infix)
 	{
 		string result;
+		Stack s(strlen(infix));
+
 		infix = Util::removeSpaces(infix);
 
 
 		for (int i = 0; i < strlen(infix) + 1; i++) {
 			char c = infix[i];
+			
+			//Validari input
+
+			if ( (c==')' || c==']') && (Util::isDigit(infix[i + 1]) || Util::isSemicolon(infix[i + 1]))  // )2 ).
+				||  (Util::isSemicolon(c) && Util::isSemicolon(infix[i + 1])) // ..
+				||   Util::isLetter(c)  //a
+				||  (Util::isSemicolon(c) && Util::isOperator(infix[i+1]))  || (Util::isOperator(c) && Util::isSemicolon(infix[i + 1])) // .* *.
+				|| (Util::isOperator(c) && Util::isOperator(infix[i + 1])) //**
+				|| (Util::isExpresion(c) && Util::isExpresion(infix[i + 1])) //##
+				||  ( (c=='(' || c=='[') && Util::isExpresion(infix[i + 1])) //(#
+				||  (Util::isExpresion(c) && Util::isSemicolon(infix[i+1])) //#.
+				||   (c == '('  && infix[i+1] == ')') || (c == '[' && infix[i + 1] == ']') || (c == '(' && infix[i + 1] == ']') || (c == '[' && infix[i + 1] == ')') // () [] (] [)
+	            ||  (Util::isSemicolon(c)  && (Util::isOperator(infix[i+1]) || Util::isExpresion(infix[i + 1]))) // .+ .#
+				||  (Util::isOperator(c) && Util::isExpresion(infix[i+1]))  //+#
+				|| (Util::isOperator(infix[i+1]) && Util::isExpresion(c))  //#+
+				||  ( (Util::isOperator(c) || Util::isDigit(c) || Util::isExpresion(c) || Util::isRoundedBrackets(c) || Util::isSemicolon(c) || Util::isSqareBrackets(c) ) &&
+					(infix[i+1] == '`' || infix[i + 1] == '~' || infix[i + 1] == '!' || infix[i + 1] == '@' || infix[i + 1] == '$' || infix[i + 1] == '%' 
+					|| infix[i + 1] == '&' || infix[i + 1] == '_' || infix[i + 1] == '`{' || infix[i + 1] == '}' || infix[i + 1] == ';' || infix[i + 1] == ':' 
+					|| infix[i + 1] == '"' || infix[i + 1] == '<' || infix[i + 1] == '>' || infix[i + 1] == '?' ))) {
+				
+				cout <<endl <<"Invalid input! Try again!";
+				this->isInvalidInput = true;
+			}
+
 
 			if (Util::isDigit(c) || (Util::isSemicolon(c) && Util::isDigit(infix[i + 1]))) {
 				while (Util::isDigit(c) || Util::isSemicolon(c)) {
@@ -250,25 +282,25 @@ public:
 				}
 			}
 			else if (c == '(' || c == '[') {
-				stack.push('(');
+				s.push('(');
 			}
 			else if (c == ')' || c == ']') {
-				while (!stack.empty() && stack.top() != '(' && stack.top() != '[') {
-					result += stack.pop();
+				while (!s.empty() && s.top() != '(' && s.top() != '[') {
+					result += s.pop();
 				}
-				stack.pop();
+				s.pop();
 			}
 			else {
-				while (!stack.empty()
-					&& Util::precedence(c) <= Util::precedence(stack.top())) {
-					result += stack.pop();
+				while (!s.empty()
+					&& Util::precedence(c) <= Util::precedence(s.top())) {
+					result += s.pop();
 				}
-				stack.push(c);
+				s.push(c);
 			}
 		}
 
-		while (!stack.empty()) {
-			result += stack.pop();
+		while (!s.empty()) {
+			result += s.pop();
 		}
 
 		
@@ -282,6 +314,7 @@ public:
 		//for (int i = 0; i < result.length(); i++) {
 		//	cout << charResult[i];
 		//}
+		
 		return charResult;
 
 	}
@@ -289,6 +322,10 @@ public:
 	float evaluatePostfix(const char* infix) { 
 
 		char* postfix = infixToPostfix(infix);
+
+		if (this->isInvalidInput) {
+			return 0;
+		}
 
 		Stack s(strlen(infix));
 
@@ -390,15 +427,8 @@ public:
 		
 	}
 
-	friend void operator<<(ostream& console, Expression e);
 
 };
-
-
-
-void operator<<(ostream& console, Expression e) {
-	console << "Input: " << e.getInput();
-}
 
 
 class Calculator: public Expression {
@@ -411,30 +441,40 @@ public:
 
 	char* getInput() {
 
-		if (input == nullptr) {
+		if (this->input == nullptr) {
 			return nullptr;
 		}
-		return Util::copiereString(this->input);
+		char* copie = new char[strlen(this->input) + 1];
+		strcpy_s(copie, strlen(this->input) + 1, this->input);
+		return copie;
 
 	}
 
 	void setInput(const char* inputUser) {
-		if (input) {
-			delete[] input;
+		if (this->input != nullptr) {
+			delete[] this->input;
 		}
 		this->input = Util::copiereString(inputUser);
-		this->result = evaluatePostfix(this->input);
+		//char* copie = new char[strlen(inputUser) + 1];
+		//strcpy_s(copie, strlen(inputUser) + 1, input);
 	}
 
 	float getResult() {
+		this->result = evaluatePostfix(this->input);
 		return this->result;
+		
 	}
+
+
 
 	void afisareInserare() {
 
+		cout<<"      --------------------------------     "<< endl<<"-----| Welcome to Calculations Realm! |-----" << 
+		endl << "      --------------------------------     " << endl << endl;
+					 
 		while (true) {
 
-			cout<<endl <<"Enter an equation: ";
+			cout<<"Enter an equation: ";
 			char inputUser[100];
 			cin.getline(inputUser, ' ');
 
@@ -444,12 +484,18 @@ public:
 
 			Expression::setInput(inputUser);
 			//Expr4::getInput();
-			this->result = Expression::evaluatePostfix(inputUser);
-			cout << "Result: " << this->result << endl;
+			if (Expression::getIsInvalidInput() == false) {
+				this->result = Expression::evaluatePostfix(inputUser);
+				cout << "Result: " << this->result << endl;
+				numberOfEquations++;
+				cout << endl << "___________" << endl<<endl;
 
-			numberOfEquations++;
+			}
+			else {
+				cout << endl << "___________" << endl<<endl;
+			}
 
-			cout<<endl <<"___________"<< endl;
+
 		}
 
 	}
@@ -459,7 +505,12 @@ public:
 	}
 
 	Calculator(const char* userInput) {
-		this->setInput(userInput);
+		if (this->input != nullptr) {
+			delete[] this->input;
+			this->input = nullptr;
+		}
+		this->input = new char[strlen(userInput) + 1];
+		strcpy_s(this->input, strlen(userInput) + 1, userInput);
 	}
 
 	~Calculator() {
@@ -503,27 +554,20 @@ public:
 		return this->result += num;
 	}
 
-
-	friend void operator<<(ostream& console, Calculator c);
-
 };
 
 int Calculator::numberOfEquations = 0;
 
-void operator<<(ostream& console, Calculator c) {
-	console << endl;
-	console << "Input: " << c.getInput()<<endl;
-	console << "Result: " << c.getResult();
-
-
-}
 
 int main() {
 
+
 	Calculator c1;
-	c1.afisareInserare();
+	c1.afisareInserare();  //se poate lua input continuu
+
 	//c1("2+2.4");
 	//c1.setInput("5+3");
+	//cout << c1;
 	//cout << endl;
 	//c1("5+2");
 	//c1 += 3;
@@ -531,7 +575,7 @@ int main() {
 	//cout << c1;
 
 	//Expression exp1;
-	//exp1.setInput("(1+2)*3"); //40+4*2 = 48   9.4 10.0
+	//exp1.setInput("(1+2)*3");
 	//cout << exp1;
 	//cout<<endl<<exp1[0];
 

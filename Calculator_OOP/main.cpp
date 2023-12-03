@@ -1,6 +1,10 @@
+#define _CRT_SECURE_NO_WARNINGS
+
+
 #include <iostream>
 #include <string>
 #include <cmath>
+
 
 using namespace std;
 
@@ -162,27 +166,28 @@ public:
 };
 
 
-
-class Expr4 {
+class Expression {
 	char* input = nullptr;
 	Stack stack;
 
 public:
 
 
-	Expr4() {
+	Expression() {
 
 	}
 
-	~Expr4() {
-		delete[] this->input;
+	~Expression() {
+		if(this->input != nullptr){
+			delete[] this->input;
+		}
 	}
 
 	char* getInput() {
-		if (input == nullptr) {
+		if (this->input == nullptr) {
 			return nullptr;
 		}
-		cout << this->input << endl;
+		//cout << this->input << endl;
 		return Util::copiereString(this->input);
 
 	}
@@ -192,7 +197,8 @@ public:
 		this->input = Util::copiereString(input);
 	}
 
-	float performOp(double a, double b, char op) { //GOOD
+
+	float performOp(float a, float b, char op) { //GOOD
 		switch (op) {
 		case '+':
 			return a + b;
@@ -202,7 +208,7 @@ public:
 			return a * b;
 		case '/':
 			if (a == 0){
-				cout << "Division by 0 is impossible.";
+				cout <<endl <<"Division by 0 is impossible."<<endl;
 				return 0.0;
 			}
 			return b / a;
@@ -243,11 +249,11 @@ public:
 					result += ' ';
 				}
 			}
-			else if (c == '(') {
+			else if (c == '(' || c == '[') {
 				stack.push('(');
 			}
-			else if (c == ')') {
-				while (stack.top() != '(') {
+			else if (c == ')' || c == ']') {
+				while (!stack.empty() && stack.top() != '(' && stack.top() != '[') {
 					result += stack.pop();
 				}
 				stack.pop();
@@ -356,16 +362,50 @@ public:
 
 	//SUPRAINCARCAREA A 2 OPERATORI
 
+	char operator[](int index) {
+		if (index >= 0 && index < strlen(input))
+		{
+			return input[index];
+		}
+		else {
+			cout << "Nu exista";
+		}
+	}
 
+	float operator+(const char* val)  //poti adauga dupa ecuatia deja introdusa o continuare a ei
+	{
+
+		char* newInput = strcat(this->input, val);
+
+
+		this->input = new char[strlen(newInput)+1];
+		for (int i = 0; i < strlen(newInput); i++) {
+			this->input[i] = newInput[i];
+		}
+
+		this->input[strlen(newInput)] = '\0';
+
+		cout<<endl<<evaluatePostfix(this->input);
+		return evaluatePostfix(this->input);
+		
+	}
+
+	friend void operator<<(ostream& console, Expression e);
 
 };
 
 
 
-class Calculator: public Expr4 {
+void operator<<(ostream& console, Expression e) {
+	console << "Input: " << e.getInput();
+}
+
+
+class Calculator: public Expression {
 
 	char* input = nullptr;
-	//string input;
+	float result = 0;
+	static int numberOfEquations;
 
 public:
 
@@ -383,9 +423,12 @@ public:
 			delete[] input;
 		}
 		this->input = Util::copiereString(inputUser);
+		this->result = evaluatePostfix(this->input);
 	}
 
-
+	float getResult() {
+		return this->result;
+	}
 
 	void afisareInserare() {
 
@@ -399,9 +442,13 @@ public:
 				break;
 			}
 
-			Expr4::setInput(inputUser);
+			Expression::setInput(inputUser);
 			//Expr4::getInput();
-			cout << "Result: " << Expr4::evaluatePostfix(inputUser) << endl;
+			this->result = Expression::evaluatePostfix(inputUser);
+			cout << "Result: " << this->result << endl;
+
+			numberOfEquations++;
+
 			cout<<endl <<"___________"<< endl;
 		}
 
@@ -423,40 +470,72 @@ public:
 
 	}
 
+	//SUPRAINCARCAREA A 2 OPERATORI
+
+	void operator()(const char* eq) {  //afiseaza daca rezultatul operatiei este par/impar in caz de rezultatul e int
+
+		float result;
+		result = Expression::evaluatePostfix(eq);
+		int roundedResult = ceil(result);
+
+
+		if (roundf(result) == result) {
+			
+			if (roundedResult % 2 == 0) {
+				cout << "The result is even";
+			}
+			else {
+				cout << "The result is odd";
+			}
+		}
+		else {
+			cout << "The result is a float";
+		}
+
+		//cout << evaluatePostfix(eq);
+		//this->result = evaluatePostfix(eq);
+		//return this->result;
+	}
+
+	float operator +=(float num) {
+		this->result += num;
+		cout << endl<<this->result;
+		return this->result += num;
+	}
+
+
+	friend void operator<<(ostream& console, Calculator c);
+
 };
 
+int Calculator::numberOfEquations = 0;
 
+void operator<<(ostream& console, Calculator c) {
+	console << endl;
+	console << "Input: " << c.getInput()<<endl;
+	console << "Result: " << c.getResult();
+
+
+}
 
 int main() {
 
 	Calculator c1;
 	c1.afisareInserare();
+	//c1("2+2.4");
+	//c1.setInput("5+3");
+	//cout << endl;
+	//c1("5+2");
+	//c1 += 3;
 
+	//cout << c1;
 
-	//"40+(5-1)*2"
+	//Expression exp1;
+	//exp1.setInput("(1+2)*3"); //40+4*2 = 48   9.4 10.0
+	//cout << exp1;
+	//cout<<endl<<exp1[0];
 
-	//Expr4 exp1;
-	//exp1.setInput("1 + 2 * 3"); //40+4*2 = 48   9.4 10.0
-	//exp1.getInput();
-	//exp1.evaluatePostfixTEST("2+3*(1+2)");
-	 //exp1.evaluatePostfixTEST("3/2+3+1/3");
-	//exp1.evaluatePostfixTEST("1 + 2 * 3");
+	//exp1 + "+2^3";
 
-/*	Expr4 exp2;
-	exp2.setInput("40.5+(5-1.1)*2");*/ //40+4*2 = 48
-	//exp2.getInput();
-	//exp1.evaluatePostfix("40.5+(5-1.1)*2");
-
-
-	//while (true) {
-	//	cout << "Introdu ecuatia: ";
-	//	string input;
-	//	cin >> input;
-
-	//	if (input == "exit") {
-	//		break;
-	//	}
-	//}
-
-	//return 0;
+	return 0;
 }
